@@ -1,22 +1,25 @@
+#ifndef MESSAGE_HPP
+#define MESSAGE_HPP
+
 #include "MessageInfo.hpp"
 class Message
 {
 private:
     MessageInfo info;
-    u8* messageData;
+    std::vector<u8> messageData;
 public:
     Message(u8* data) : info(data)
     {
-        messageData = new u8[info.messageSize()];
-        std::copy(data, data + info.messageSize(), messageData);
-    }
-    ~Message()
-    {
-        delete[] messageData;
+        for (size_t i = 0; i < info.messageSize(); i++)
+        {
+            messageData.push_back(data[i]);
+        }
     }
     const MessageInfo& getInfo() const { return info; }
-    u8* data()
+    const std::vector<u8> data() const
     {
         return messageData;
     }
 };
+
+#endif

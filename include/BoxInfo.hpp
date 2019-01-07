@@ -32,35 +32,18 @@ public:
     void currentMessages(u32 v) { *(u32*)(info + 0x14) = v; }
     u32 maxBatchSize() const { return *(u32*)(info + 0x18); }
     u32 maxMessageSize() const { return *(u32*)(info + 0x1C); }
-    void addMessage(MessageInfo& message)
+    bool addMessage(const MessageInfo& message);
+    bool addMessage(const Message& message)
     {
-        if (message.messageSize() + currentBoxSize() + 0x70 > maxBoxSize())
-        {
-            return;
-        }
-        currentBoxSize(currentBoxSize() + message.messageSize() + 0x70);
-        messages.push_back(message);
-        fileSize(fileSize() + 0x70);
-        currentMessages(currentMessages() + 1);
+        return addMessage(message.getInfo());
     }
-    void addMessage(Message& message)
-    {
-        addMessage(const_cast<MessageInfo&>(message.getInfo()));
-    }
-    std::vector<u8> data() const
-    {
-        std::vector<u8> ret(fileSize());
-        ret.insert(ret.end(), info, info + 0x20);
-        for (auto message : messages)
-        {
-            ret.insert(ret.end(), message.data(), message.data() + 0x70);
-        }
-
-        return ret;
-    }
+    std::vector<u8> data() const;
     const std::vector<MessageInfo>& getMessages() const
     {
         return messages;
     }
+    void clearMessages();
+    void deleteMessage(cecMessageId id);
 };
+
 #endif

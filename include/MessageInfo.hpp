@@ -1,5 +1,11 @@
+#ifndef MESSAGEINFO_HPP
+#define MESSAGEINFO_HPP
+
 #include <3ds.h>
 #include <algorithm>
+extern "C" {
+#include "cecdu.h"
+}
 class MessageInfo
 {
 private:
@@ -36,6 +42,8 @@ public:
         std::copy(data, data + 0x70, (u8*)&info);
     }
     u32 messageSize() const { return info.messageSize; }
-    u8* data() const { return (u8*)&info; }
-    const u8* messageID() const { return info.messageID; }
+    const u8* data() const { return (u8*)&info; }
+    cecMessageId messageID() const;
 };
+
+#endif
