@@ -6,6 +6,7 @@
 #include "STDirectory.hpp"
 extern "C"
 {
+#include "base64.h"
 #include "cecdu.h"
 }
 
@@ -24,13 +25,62 @@ int main()
     gfxInitDefault();
     hidInit();
     consoleInit(GFX_TOP, nullptr);
+    if (R_FAILED(res = cecduInit())) printf("Init: %X\n", res);
+    boxList list;
+    size_t sizeWritten = sizeof(struct boxList);
+    CECDU_OpenRawFile(0x0, CEC_PATH_MBOX_LIST, CEC_READ | CEC_SKIP_CHECKS);
+    CECDU_ReadRawFile(&list, &sizeWritten);
+    mkdir("/3ds/CECTool", 777);
+    for (size_t i = 0; i < list.numBoxes; i++)
+    {
+        const std::string path = "/3ds/CECTool/" + std::string(list.boxId[i]);
+        mkdir(path.c_str(), 777);
+        u32 id = strtoul(list.boxId[i], nullptr, 16);
+        Box box(id);
+        for (auto message : box.getMessages())
+        {
+            size_t size = message.messageSize() + 0x70;
+            cecMessageId messageId = message.messageID();
+            char messageString[9];
+            std::copy(messageId.data, messageId.data + 8, messageString);
+            messageString[8] = '\0';
+            u8 messageData[size];
+            printf("In size: %u\n", size);
+            if (R_FAILED(res = CECDU_ReadMessage(id, false, messageId, messageData, &size))) printf("Message Read: %X: %s", messageString);
+            printf("Out size: %u\n", size);
+            while (aptMainLoop() && !(hidKeysDown() & KEY_A)) hidScanInput();
+            hidScanInput();
+            std::string outPath = path + '/';
+            size_t newSize;
+            char* outName = base64_encode(messageString, 8, &newSize);
+            outPath.append(outName, outName + newSize);
+            free(outName);
+            FILE* out = fopen(outPath.c_str(), "w");
+            printf(outPath.c_str());
+            printf("\n");
+            printf("Error: %i\n", errno);
+            while (aptMainLoop() && !(hidKeysDown() & KEY_A)) hidScanInput();
+            hidScanInput();
+            fwrite(messageData, 1, size, out);
+            fclose(out);
+        }
+    }
+    return 0;
+}
+
+int main4() // Deletes all messages from Kirby
+{
+    Result res;
+    gfxInitDefault();
+    hidInit();
+    consoleInit(GFX_TOP, nullptr);
     if (R_FAILED(res = cecduInit())) printf("Init: %X", res);
     Box kirby(0x0010bf00);
     if (R_FAILED(res = kirby.clearMessages())) printf("Clearing messages: %X", res);
     return 0;
 }
 
-int main3()
+int main3() // Reads all boxes and their message IDs
 {
     Result res;
     gfxInitDefault();
@@ -46,10 +96,10 @@ int main3()
         u32 id = strtoul(list.boxId[i], NULL, 16);
         Box box(id);
         printf("Box %u: %s %X\n", i, list.boxId[i], strtoul(list.boxId[i], NULL, 16));
-        for (auto message : box.messageNames())
-        {
-            printf("    %s\n", message.c_str());
-        }
+        // for (auto message : box.messageNames())
+        // {
+        //     printf("    %s\n", message.c_str());
+        // }
         while (aptMainLoop() && !(hidKeysDown() & KEY_A)) hidScanInput();
         hidScanInput();
     }

@@ -19,10 +19,6 @@ Box::Box(u32 id) : id(id)
         delete info;
         info = new BoxInfo(in);
     }
-    for (auto message : info->getMessages())
-    {
-        messages.push_back(message.messageID());
-    }
 }
 
 Result Box::addMessage(Message& message)
