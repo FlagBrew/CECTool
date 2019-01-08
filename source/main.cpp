@@ -59,7 +59,7 @@ int main()
             printf(outPath.c_str());
             printf("\n");
             printf("Error: %i\n", errno);
-            while (aptMainLoop() && !(hidKeysDown() & KEY_A)) hidScanInput();
+            while (aptMainLoop() && !(hidKeysDown() & KEY_B)) hidScanInput();
             hidScanInput();
             fwrite(messageData, 1, size, out);
             fclose(out);
