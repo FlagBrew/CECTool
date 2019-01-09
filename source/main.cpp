@@ -10,6 +10,8 @@ extern "C"
 #include "cecdu.h"
 }
 
+int __stacksize__ = 64 * 1024;
+
 struct boxList
 {
     u8 magic[2];
