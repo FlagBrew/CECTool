@@ -10,6 +10,7 @@ private:
     u8 info[0x20];
     std::vector<MessageInfo> messages;
 public:
+    BoxInfo() {}
     BoxInfo(u8* data, bool cont = true)
     {
         std::copy(data, data + 0x20, info);

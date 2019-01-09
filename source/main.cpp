@@ -56,7 +56,7 @@ int main()
             fclose(out);
         }
         FILE* out = fopen((path + "/BoxInfo_____").c_str(), "w");
-        fwrite(box.getInfo()->data().data(), 1, 0x20, out);
+        fwrite(box.getInfo().data().data(), 1, 0x20, out);
         fclose(out);
     }
     return 0;

@@ -13,16 +13,12 @@ class Box
 {
 private:
     u32 id;
-    BoxInfo* info;
+    BoxInfo info;
 public:
     Box(u32 id);
-    ~Box()
-    {
-        delete info;
-    }
 
-    std::vector<MessageInfo> getMessages() const { return info->getMessages(); }
-    const BoxInfo* getInfo() const { return info; }
+    std::vector<MessageInfo> getMessages() const { return info.getMessages(); }
+    const BoxInfo& getInfo() const { return info; }
     Result addMessage(Message& message);
     Result clearMessages();
     Result removeMessage(cecMessageId);
