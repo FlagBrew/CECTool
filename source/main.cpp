@@ -45,15 +45,12 @@ int main()
             std::copy(messageId.data, messageId.data + 8, messageString);
             messageString[8] = '\0';
             u8 messageData[size];
-            size_t newSize;
-            std::string outName = base64_encode(messageString, 8, &newSize);
+            std::string outPath = path + '/' + base64_encode(messageString, 8);
             if (R_FAILED(res = CECDU_ReadMessage(id, false, messageId, messageData, &size)))
             {
-                printf("Message Read: %s", outName.c_str());
+                printf("Message Read: %s", outPath.c_str());
                 continue;
             }
-            std::string outPath = path + '/';
-            outPath += outName;
             FILE* out = fopen(outPath.c_str(), "w");
             fwrite(messageData, 1, size, out);
             fclose(out);

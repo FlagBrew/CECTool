@@ -75,9 +75,9 @@ unsigned char *base64_decode(const char *data, size_t input_length, size_t *outp
     return decoded_data;
 }
 
-std::string base64_encode(const char *data, size_t input_length, size_t *output_length)
+std::string base64_encode(const char *data, size_t input_length)
 {
-    *output_length = 4 * ((input_length + 2) / 3);
+    size_t output_length = 4 * ((input_length + 2) / 3);
 
     std::string ret = "";
 
