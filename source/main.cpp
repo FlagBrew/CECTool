@@ -4,9 +4,9 @@
 #include "BoxInfo.hpp"
 #include "Box.hpp"
 #include "STDirectory.hpp"
+#include "base64.hpp"
 extern "C"
 {
-#include "base64.h"
 #include "cecdu.h"
 }
 
@@ -39,31 +39,28 @@ int main()
         Box box(id);
         for (auto message : box.getMessages())
         {
-            size_t size = message.messageSize() + 0x70;
+            size_t size = message.messageSize();
             cecMessageId messageId = message.messageID();
             char messageString[9];
             std::copy(messageId.data, messageId.data + 8, messageString);
             messageString[8] = '\0';
             u8 messageData[size];
-            printf("In size: %u\n", size);
-            if (R_FAILED(res = CECDU_ReadMessage(id, false, messageId, messageData, &size))) printf("Message Read: %X: %s", messageString);
-            printf("Out size: %u\n", size);
-            while (aptMainLoop() && !(hidKeysDown() & KEY_A)) hidScanInput();
-            hidScanInput();
-            std::string outPath = path + '/';
             size_t newSize;
-            char* outName = base64_encode(messageString, 8, &newSize);
-            outPath.append(outName, outName + newSize);
-            free(outName);
+            std::string outName = base64_encode(messageString, 8, &newSize);
+            if (R_FAILED(res = CECDU_ReadMessage(id, false, messageId, messageData, &size)))
+            {
+                printf("Message Read: %s", outName.c_str());
+                continue;
+            }
+            std::string outPath = path + '/';
+            outPath += outName;
             FILE* out = fopen(outPath.c_str(), "w");
-            printf(outPath.c_str());
-            printf("\n");
-            printf("Error: %i\n", errno);
-            while (aptMainLoop() && !(hidKeysDown() & KEY_B)) hidScanInput();
-            hidScanInput();
             fwrite(messageData, 1, size, out);
             fclose(out);
         }
+        FILE* out = fopen((path + "/BoxInfo_____").c_str(), "w");
+        fwrite(box.getInfo()->data().data(), 1, 0x20, out);
+        fclose(out);
     }
     return 0;
 }

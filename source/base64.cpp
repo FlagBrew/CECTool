@@ -24,7 +24,7 @@
 *         reasonable ways as different from the original version.
 */
 
-#include "base64.h"
+#include "base64.hpp"
 
 static char encoding_table[] = {
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
@@ -34,7 +34,7 @@ static char encoding_table[] = {
 	'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
 	'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
 	'w', 'x', 'y', 'z', '0', '1', '2', '3',
-	'4', '5', '6', '7', '8', '9', '+', '/'
+	'4', '5', '6', '7', '8', '9', '+', '-'
 };
 static char *decoding_table = NULL;
 static int mod_table[] = {0, 2, 1};
@@ -75,15 +75,13 @@ unsigned char *base64_decode(const char *data, size_t input_length, size_t *outp
     return decoded_data;
 }
 
-char *base64_encode(const char *data, size_t input_length, size_t *output_length)
+std::string base64_encode(const char *data, size_t input_length, size_t *output_length)
 {
-
     *output_length = 4 * ((input_length + 2) / 3);
 
-    char *encoded_data = (char*)malloc(*output_length);
-    if (encoded_data == NULL) return NULL;
+    std::string ret = "";
 
-    for (int i = 0, j = 0; i < input_length;) {
+    for (int i = 0, j = 0; i < input_length; j += 4) {
 
         uint32_t octet_a = i < input_length ? (unsigned char)data[i++] : 0;
         uint32_t octet_b = i < input_length ? (unsigned char)data[i++] : 0;
@@ -91,14 +89,14 @@ char *base64_encode(const char *data, size_t input_length, size_t *output_length
 
         uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
 
-        encoded_data[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 1 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
+        ret.push_back(encoding_table[(triple >> 3 * 6) & 0x3F]);
+        ret.push_back(encoding_table[(triple >> 2 * 6) & 0x3F]);
+        ret.push_back(encoding_table[(triple >> 1 * 6) & 0x3F]);
+        ret.push_back(encoding_table[(triple >> 0 * 6) & 0x3F]);
     }
 
     for (int i = 0; i < mod_table[input_length % 3]; i++)
-        encoded_data[*output_length - 1 - i] = '=';
+        ret.push_back('=');
 
-    return encoded_data;
+    return ret;
 }

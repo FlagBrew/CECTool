@@ -22,6 +22,7 @@ public:
     }
 
     std::vector<MessageInfo> getMessages() const { return info->getMessages(); }
+    const BoxInfo* getInfo() const { return info; }
     Result addMessage(Message& message);
     Result clearMessages();
     Result removeMessage(cecMessageId);
