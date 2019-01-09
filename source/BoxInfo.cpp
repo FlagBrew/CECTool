@@ -6,7 +6,7 @@ extern "C" {
 
 bool BoxInfo::addMessage(const MessageInfo& message)
 {
-    if (message.messageSize() + currentBoxSize() + 0x70 > maxBoxSize() || currentMessages() + 1 > maxMessages())
+    if (message.messageSize() + currentBoxSize() + 0x70 > maxBoxSize() || currentMessages() + 1 > maxMessages() || std::find(messages.begin(), messages.end(), message) != messages.end())
     {
         return false;
     }

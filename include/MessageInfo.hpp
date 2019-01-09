@@ -3,6 +3,7 @@
 
 #include <3ds.h>
 #include <algorithm>
+#include <string.h>
 extern "C" {
 #include "cecdu.h"
 }
@@ -40,6 +41,10 @@ public:
     MessageInfo(u8* data)
     {
         std::copy(data, data + 0x70, (u8*)&info);
+    }
+    bool operator ==(const MessageInfo& message)
+    {
+        return !(memcmp(&info, &(message.info), sizeof(info)));
     }
     u32 messageSize() const { return info.messageSize; }
     const u8* data() const { return (u8*)&info; }
