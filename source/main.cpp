@@ -268,6 +268,7 @@ int main()
         {
             consoleClear();
             printf("What do?\nA: dump all boxes\nB: import all boxes\n");// Possible: \nX: import and delete all SD boxes // Wishlist: \nY: dump outboxes
+            printf("Press START to exit\n");
             showMenu = false;
         }
         down = hidKeysDown();
