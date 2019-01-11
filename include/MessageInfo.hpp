@@ -4,9 +4,23 @@
 #include <3ds.h>
 #include <algorithm>
 #include <string.h>
+#include <ctime>
 extern "C" {
 #include "cecdu.h"
 }
+
+struct Timestamp
+{
+    u32 year;
+    u8 month;
+    u8 day;
+    u8 weekDay;
+    u8 hour;
+    u8 minute;
+    u8 second;
+    u16 millisecond; // Likely, not certain
+};
+
 class MessageInfo
 {
 private:
@@ -30,18 +44,9 @@ private:
         u8 newFlag;
         u8 senderID[8];
         u8 senderID2[8];
-        u32 sentYear;
-        u8 sentMonth;
-        u8 sentDay;
-        u8 sentUnknown[6];
-        u32 receivedYear;
-        u8 receivedMonth;
-        u8 receivedDay;
-        u8 receivedUnknown[6];
-        u32 createdYear;
-        u8 createdMonth;
-        u8 createdDay;
-        u8 createdUnknown[6];
+        Timestamp sent;
+        Timestamp received;
+        Timestamp created;
         u8 sendCount;
         u8 forwardCount;
         u8 userData[2];
@@ -58,8 +63,12 @@ public:
     u32 messageSize() const { return info.messageSize; }
     const u8* data() const { return (u8*)&info; }
     cecMessageId messageID() const;
-    // void updateReceivedTime();
-    // void updateSentTime();
+    Timestamp sentTime() const { return info.sent; }
+    Timestamp receivedTime() const { return info.received; }
+    Timestamp createdTime() const { return info.created; }
+    void sentTime(Timestamp t) { info.sent = t; }
+    void receivedTime(Timestamp t) { info.received = t; }
+    void updateTimes();
 };
 
 #endif

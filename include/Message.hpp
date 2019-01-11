@@ -16,6 +16,7 @@ public:
         }
     }
     const MessageInfo& getInfo() const { return info; }
+    MessageInfo& getInfo() { return info; }
     std::vector<u8> data() const
     {
         return messageData;

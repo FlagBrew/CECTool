@@ -31,6 +31,9 @@ include $(DEVKITARM)/3ds_rules
 #     - icon.png
 #     - <libctru folder>/default_icon.png
 #---------------------------------------------------------------------------------
+APP_TITLE	:= 	CECTool
+APP_DESCRIPTION	:= 	A tool for managing StreetPass data
+APP_AUTHOR	:= 	piepie62
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source

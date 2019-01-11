@@ -58,8 +58,8 @@ enum CecOpenFlag
 {
     CEC_READ = BIT(1),
     CEC_WRITE = BIT(2),
-    CEC_CREATE_FOLDER = BIT(3),
-    CEC_SKIP_CHECKS = BIT(4)
+    CEC_CREATE = BIT(3),
+    CEC_CHECK = BIT(4)
 };
 
 typedef struct CecMessageId
