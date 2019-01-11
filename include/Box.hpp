@@ -16,7 +16,7 @@ private:
     u32 id;
     BoxInfo info;
     bool outBox;
-    OBIndex* index;
+    OBIndex* index = nullptr;
 public:
     Box(u32 id, bool outBox = false);
     ~Box()

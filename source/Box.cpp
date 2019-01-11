@@ -14,7 +14,7 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
     {
         delete[] in;
         in = new u8[readSize = info.fileSize()];
-        res = CECDU_OpenAndRead(id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO, CEC_READ | CEC_WRITE | CEC_CHECK, in, &readSize);
+        res = CECDU_OpenAndRead(id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO, CEC_READ | CEC_CHECK, in, &readSize);
         if (R_FAILED(res)) printf("Read info 2\n%X", res);
         info = BoxInfo(in);
     }
@@ -32,6 +32,7 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
             in = new u8[readSize = 8 + index->size() * 8];
             res = CECDU_OpenAndRead(id, CEC_PATH_OUTBOX_INDEX, CEC_READ | CEC_CHECK, in, &readSize);
             if (R_FAILED(res)) printf("Read OBIndex 2\n%X", res);
+            delete index;
             index = new OBIndex(in, true);
         }
     }

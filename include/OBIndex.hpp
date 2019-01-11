@@ -44,9 +44,10 @@ public:
     std::vector<u8> data() const
     {
         std::vector<u8> ret;
+        u8* info = (u8*)&obIndex;
         for (size_t i = 0; i < sizeof(obIndex); i++)
         {
-            ret.push_back(*(((u8*)&obIndex) + i));
+            ret.push_back(info[i]);
         }
         for (auto id : messages)
         {
