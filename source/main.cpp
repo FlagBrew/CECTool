@@ -278,8 +278,8 @@ void dumpBoxes()
         mkdir(path.c_str(), 777);
         mkdir(templatePath.c_str(), 777);
         u32 id = strtoul(list.boxId[i], nullptr, 16);
-        Box box(id);
-        for (auto message : box.getMessages())
+        Box* box = new Box(id, false);
+        for (auto message : box->getMessages())
         {
             size_t size = message.messageSize();
             cecMessageId messageId = message.messageID();
@@ -299,7 +299,7 @@ void dumpBoxes()
             fclose(out);
             delete[] messageData;
         }
-        BoxInfo copy = box.getInfo();
+        BoxInfo copy = box->getInfo();
         copy.clearMessages();
         out = fopen((templatePath + "/BoxInfo_____").c_str(), "w");
         fwrite(copy.data().data(), 1, copy.data().size(), out);
@@ -309,8 +309,9 @@ void dumpBoxes()
         templatePath = "/3ds/CECTool/template/" + std::string(list.boxId[i]) + "/OutBox__";
         mkdir(path.c_str(), 777);
         mkdir(templatePath.c_str(), 777);
-        box = Box(id, true);
-        for (auto message : box.getMessages())
+        delete box;
+        box = new Box(id, true);
+        for (auto message : box->getMessages())
         {
             size_t size = message.messageSize();
             cecMessageId messageId = message.messageID();
@@ -330,7 +331,7 @@ void dumpBoxes()
             fclose(out);
             delete[] messageData;
         }
-        copy = box.getInfo();
+        copy = box->getInfo();
         copy.clearMessages();
         out = fopen((templatePath + "/BoxInfo_____").c_str(), "w");
         fwrite(copy.data().data(), 1, copy.data().size(), out);

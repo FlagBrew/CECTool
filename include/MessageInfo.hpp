@@ -3,6 +3,7 @@
 
 #include <3ds.h>
 #include <algorithm>
+#include <vector>
 #include <string.h>
 #include <ctime>
 extern "C" {
@@ -61,7 +62,16 @@ public:
         return !(memcmp(&info, &(message.info), sizeof(info)));
     }
     u32 messageSize() const { return info.messageSize; }
-    const u8* data() const { return (u8*)&info; }
+    std::vector<u8> data() const
+    {
+        std::vector<u8> ret;
+        u8* infoPtr = (u8*)&info;
+        for (size_t i = 0; i < sizeof(info); i++)
+        {
+            ret.push_back(infoPtr[i]);
+        }
+        return ret;
+    }
     cecMessageId messageID() const;
     Timestamp sentTime() const { return info.sent; }
     Timestamp receivedTime() const { return info.received; }

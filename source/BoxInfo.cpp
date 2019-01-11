@@ -23,7 +23,7 @@ std::vector<u8> BoxInfo::data() const
     ret.insert(ret.end(), info, info + 0x20);
     for (auto message : messages)
     {
-        ret.insert(ret.end(), message.data(), message.data() + 0x70);
+        ret.insert(ret.end(), message.data().begin(), message.data().begin() + 0x70);
     }
     ret.shrink_to_fit();
 
