@@ -146,6 +146,7 @@ void createBox(std::string id)
         delete[] data;
         box.addMessage(message);
     }
+    box.saveInfo();
 
     CECDU_OpenAndWrite(boxId, CEC_PATH_MBOX_LIST, CEC_WRITE | CEC_CHECK, &list, sizeof(boxList));
 }
@@ -163,7 +164,7 @@ void importBoxes(bool del)
     {
         if (dir.folder(i))
         {
-            if (io::exists("/3ds/CECTool/" + dir.item(i) + "/InBox___/BoxInfo_____"))
+            if (io::exists("/3ds/CECTool/" + dir.item(i) + "/InBox___"))
             {
                 if (dir.item(i).find_first_not_of("1234567890abcdef") == std::string::npos)
                 {
@@ -194,16 +195,12 @@ void importBoxes(bool del)
             boxId = list.boxId[availableBoxes[i]];
             currentId = std::stoul(list.boxId[availableBoxes[i]], nullptr, 16);
             dir = STDirectory("/3ds/CECTool/" + boxId + "/InBox___");
-            FILE* in = fopen(("/3ds/CECTool/" + boxId + "/InBox___/BoxInfo_____").c_str(), "r");
-            u8* data = new u8[0x20];
-            fread(data, 1, 0x20, in);
-            fclose(in);
-            BoxInfo info(data, false);
+            FILE* in;
+            u8* data;
             Box box(currentId, false);
-            delete[] data;
             u8 boxDataMod = 0;
             // dir.count() -1 to skip BoxInfo_____
-            for (size_t j = 0; j < dir.count() - 1 && box.getMessages().size() < info.maxMessages(); j++)
+            for (size_t j = 0; j < dir.count() - 1 && box.getMessages().size() < box.getInfo().maxMessages(); j++)
             {
                 if (dir.item(j + boxDataMod) == "BoxInfo_____")
                 {
@@ -229,7 +226,7 @@ void importBoxes(bool del)
             }
 
             dir = STDirectory("/3ds/CECTool/" + boxId + "/OutBox__");
-            for (size_t j = 0; j < dir.count() - 2 && box.getMessages().size() < info.maxMessages(); j++)
+            for (size_t j = 0; j < dir.count() - 2 && box.getMessages().size() < box.getInfo().maxMessages(); j++)
             {
                 in = fopen(("/3ds/CECTool/" + boxId + "/OutBox__/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
@@ -269,25 +266,24 @@ void dumpBoxes()
     FILE* out;
     for (size_t i = 0; i < list.numBoxes; i++)
     {
-        std::string path = "/3ds/CECTool/" + std::string(list.boxId[i]);
-        std::string templatePath = "/3ds/CECTool/template/" + std::string(list.boxId[i]);
+        const std::string boxId = list.boxId[i];
+        std::string path = "/3ds/CECTool/" + boxId;
+        std::string templatePath = "/3ds/CECTool/template/" + boxId;
         mkdir(path.c_str(), 777);
         mkdir(templatePath.c_str(), 777);
         path += "/InBox___";
         templatePath += "/InBox___";
+        std::string filePath;
         mkdir(path.c_str(), 777);
         mkdir(templatePath.c_str(), 777);
-        u32 id = strtoul(list.boxId[i], nullptr, 16);
+        u32 id = strtoul(boxId.c_str(), nullptr, 16);
         Box* box = new Box(id, false);
         for (auto message : box->getMessages())
         {
             size_t size = message.messageSize();
             cecMessageId messageId = message.messageID();
-            char messageString[9];
-            std::copy(messageId.data, messageId.data + 8, messageString);
-            messageString[8] = '\0';
             u8* messageData = new u8[size];
-            std::string outPath = path + '/' + base64_encode(messageString, 8);
+            std::string outPath = path + '/' + base64_encode((char*)&messageId, 8);
             if (R_FAILED(res = CECDU_ReadMessage(id, false, messageId, messageData, &size)))
             {
                 delete[] messageData;
@@ -301,12 +297,13 @@ void dumpBoxes()
         }
         BoxInfo copy = box->getInfo();
         copy.clearMessages();
-        out = fopen((templatePath + "/BoxInfo_____").c_str(), "w");
+        filePath = templatePath + "/BoxInfo_____";
+        out = fopen(filePath.c_str(), "w");
         fwrite(copy.data().data(), 1, copy.data().size(), out);
         fclose(out);
 
-        path = "/3ds/CECTool/" + std::string(list.boxId[i]) + "/OutBox__";
-        templatePath = "/3ds/CECTool/template/" + std::string(list.boxId[i]) + "/OutBox__";
+        path = "/3ds/CECTool/" + boxId + "/OutBox__";
+        templatePath = "/3ds/CECTool/template/" + boxId + "/OutBox__";
         mkdir(path.c_str(), 777);
         mkdir(templatePath.c_str(), 777);
         delete box;
@@ -315,11 +312,8 @@ void dumpBoxes()
         {
             size_t size = message.messageSize();
             cecMessageId messageId = message.messageID();
-            char messageString[9];
-            std::copy(messageId.data, messageId.data + 8, messageString);
-            messageString[8] = '\0';
             u8* messageData = new u8[size];
-            std::string outPath = path + '/' + base64_encode(messageString, 8);
+            std::string outPath = path + '/' + base64_encode((char*)&messageId, 8);
             if (R_FAILED(res = CECDU_ReadMessage(id, true, messageId, messageData, &size)))
             {
                 delete[] messageData;
@@ -333,7 +327,8 @@ void dumpBoxes()
         }
         copy = box->getInfo();
         copy.clearMessages();
-        out = fopen((templatePath + "/BoxInfo_____").c_str(), "w");
+        filePath = templatePath + "/BoxInfo_____";
+        out = fopen(filePath.c_str(), "w");
         fwrite(copy.data().data(), 1, copy.data().size(), out);
         fclose(out);
         if (R_FAILED(res = CECDU_OpenRawFile(id, CEC_PATH_OUTBOX_INDEX, CEC_READ | CEC_CHECK)))
@@ -346,17 +341,19 @@ void dumpBoxes()
             size_t bufferSize = 8;
             CECDU_ReadRawFile(data, &bufferSize);
             *(u32*)(data + 4) = 0;
-            out = fopen((templatePath + "/OBIndex_____").c_str(), "w");
+            filePath = templatePath + "/OBIndex_____";
+            out = fopen(filePath.c_str(), "w");
             fwrite(data, 1, 8, out);
             fclose(out);
         }
         
-        templatePath = "/3ds/CECTool/template/" + std::string(list.boxId[i]);
+        templatePath = "/3ds/CECTool/template/" + boxId;
         u8* read = new u8[96];
         sizeWritten = 96;
         if (R_SUCCEEDED(res = CECDU_OpenAndRead(id, CEC_PATH_MBOX_INFO, CEC_READ | CEC_CHECK, read, &sizeWritten)))
         {
-            out = fopen((templatePath + "/MBoxInfo____").c_str(), "w");
+            filePath = templatePath + "/MBoxInfo____";
+            out = fopen(filePath.c_str(), "w");
             fwrite(read, 1, sizeWritten, out);
             fclose(out);
             delete[] read;
@@ -371,7 +368,8 @@ void dumpBoxes()
         sizeWritten = 4608;
         if (R_SUCCEEDED(res = CECDU_OpenAndRead(id, CECMESSAGE_BOX_ICON, CEC_READ | CEC_CHECK, read, &sizeWritten)))
         {
-            out = fopen((templatePath + "/MBoxData.001").c_str(), "w");
+            filePath = templatePath + "/MBoxData.001";
+            out = fopen(filePath.c_str(), "w");
             fwrite(read, 1, sizeWritten, out);
             fclose(out);
             delete[] read;
@@ -382,18 +380,33 @@ void dumpBoxes()
             printf("MBoxData.001 Read: %X", id);
             continue;
         }
-        read = new u8[256];
-        sizeWritten = 256;
-        if (R_SUCCEEDED(res = CECDU_OpenAndRead(id, CECMESSAGE_BOX_TITLE, CEC_READ | CEC_CHECK, read, &sizeWritten)))
+        // This is fucking hacky but it works
+        if (R_SUCCEEDED(res = CECDU_OpenRawFile(id, CECMESSAGE_BOX_TITLE, CEC_READ | CEC_CHECK)))
         {
-            out = fopen((templatePath + "/MBoxData.010").c_str(), "w");
+            filePath = templatePath + "/MBoxData.010";
+            char16_t read[256];
+            sizeWritten = 0;
+            size_t oldSizeWritten = 0;
+            do
+            {
+                sizeWritten = sizeWritten + 2;
+                if (oldSizeWritten == sizeWritten)
+                {
+                    sizeWritten -= 2;
+                    break;
+                }
+                oldSizeWritten = sizeWritten;
+                CECDU_ReadRawFile(read, &sizeWritten);
+                CECDU_OpenRawFile(id, CECMESSAGE_BOX_TITLE, CEC_READ | CEC_CHECK);
+            }
+            while (read[sizeWritten / 2 - 1] != u'\0');
+            CECDU_ReadRawFile(read, &sizeWritten);
+            out = fopen(filePath.c_str(), "w");
             fwrite(read, 1, sizeWritten, out);
             fclose(out);
-            delete[] read;
         }
         else
         {
-            delete[] read;
             printf("MBoxData.010 Read: %X", id);
             continue;
         }
@@ -401,7 +414,8 @@ void dumpBoxes()
         sizeWritten = 8;
         if (R_SUCCEEDED(res = CECDU_OpenAndRead(id, CecDataPathType(100 + 50), CEC_READ | CEC_CHECK, read, &sizeWritten)))
         {
-            out = fopen((templatePath + "/MBoxData.050").c_str(), "w");
+            filePath = templatePath + "/MBoxData.050";
+            out = fopen(filePath.c_str(), "w");
             fwrite(read, 1, sizeWritten, out);
             fclose(out);
             delete[] read;
@@ -426,6 +440,7 @@ int main()
     gfxInitDefault();
     hidInit();
     hidScanInput();
+    sdmcInit();
     consoleInit(GFX_TOP, nullptr);
     if (R_FAILED(res = cecduInit())) printf("Init: %X\n", res);
     bool showMenu = true;
