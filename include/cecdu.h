@@ -117,9 +117,9 @@ Result CECDU_WriteMessage(u32 programID, bool outBox, cecMessageId messageID, vo
 // Result CECDU_WriteMessageWithHMAC(u32 programID, bool outBox, cecMessageId messageID, void* buffer, size_t bufferSize, void* hmac);
 
 /**
- * @param messageID 8-byte value
+ * @param messageID null if not a message
  **/
-Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, cecMessageId messageID);
+Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, cecMessageId* messageID);
 
 /**
  * 
@@ -130,3 +130,8 @@ Result CECDU_RunCommand(cecCommand command);
  * 
  **/
 Result CECDU_OpenAndRead(u32 programID, cecDataPath path, u32 flag, void* buffer, size_t* bufferSize);
+
+/**
+ * In Citra, but I'm not sure what it does yet
+ **/
+Result CECDU_SetData(u32 programId, u32 option, void* buffer, size_t bufferSize);

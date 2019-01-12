@@ -125,7 +125,7 @@ Result CECDU_WriteMessage(u32 programID, bool outBox, cecMessageId messageID, vo
     return cmdbuf[1];
 }
 
-Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, cecMessageId messageID)
+Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, cecMessageId* messageID)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -133,9 +133,9 @@ Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, cecMessageId m
     cmdbuf[1] = programID;
     cmdbuf[2] = path;
     cmdbuf[3] = outBox;
-    cmdbuf[4] = 8;
-    cmdbuf[5] = IPC_Desc_Buffer(8, IPC_BUFFER_R);
-    cmdbuf[6] = messageID.data;
+    cmdbuf[4] = messageID ? 8 : 0;
+    cmdbuf[5] = messageID ? IPC_Desc_Buffer(8, IPC_BUFFER_R) : IPC_Desc_Buffer(0, IPC_BUFFER_R);
+    cmdbuf[6] = messageID;
 
     if (R_FAILED(res = svcSendSyncRequest(cecduHandle))) return res;
 
@@ -171,5 +171,21 @@ Result CECDU_OpenAndRead(u32 programID, cecDataPath path, u32 flag, void* buffer
     if (R_FAILED(res = svcSendSyncRequest(cecduHandle))) return res;
 
     *bufferSize = cmdbuf[2];
+    return cmdbuf[1];
+}
+
+Result CECDU_SetData(u32 programID, u32 option, void* buffer, size_t bufferSize)
+{
+    Result res;
+    u32* cmdbuf = getThreadCommandBuffer();
+    cmdbuf[0] = IPC_MakeHeader(0x9, 3, 2);
+    cmdbuf[1] = programID;
+    cmdbuf[2] = bufferSize;
+    cmdbuf[3] = option;
+    cmdbuf[4] = IPC_Desc_Buffer(bufferSize, IPC_BUFFER_R);
+    cmdbuf[5] = buffer;
+
+    if (R_FAILED(res = svcSendSyncRequest(cecduHandle))) return res;
+
     return cmdbuf[1];
 }

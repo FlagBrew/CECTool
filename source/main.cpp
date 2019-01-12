@@ -79,14 +79,14 @@ void createBox(std::string id)
     std::string missingFiles = "";
     for (auto file : templateDirs)
     {
-        if (!io::exists(file))
+        if (!io::folderExists(file))
         {
             missingFiles += '\t' + file + '\n';
         }
     }
     for (auto file : templateFiles)
     {
-        if (!io::exists(file))
+        if (!io::fileExists(file))
         {
             missingFiles += '\t' + file + '\n';
         }
@@ -99,7 +99,7 @@ void createBox(std::string id)
     STDirectory dir("/3ds/CECTool/" + id + "/OutBox__");
     if (!dir.good() || dir.count() < 1)
     {
-        printf("No outbox messages. Continue?\nA: Yes\nB: No");
+        printf("No outbox messages. Continue?\nA: Yes\nB: No\n");
         hidScanInput();
         while (aptMainLoop() && !(hidKeysDown() & KEY_A) && !(hidKeysDown() & KEY_B))
         {
@@ -164,7 +164,7 @@ void importBoxes(bool del)
     {
         if (dir.folder(i))
         {
-            if (io::exists("/3ds/CECTool/" + dir.item(i) + "/InBox___"))
+            if (io::folderExists("/3ds/CECTool/" + dir.item(i) + "/InBox___"))
             {
                 if (dir.item(i).find_first_not_of("1234567890abcdef") == std::string::npos)
                 {
@@ -198,17 +198,9 @@ void importBoxes(bool del)
             FILE* in;
             u8* data;
             Box box(currentId, false);
-            u8 boxDataMod = 0;
-            // dir.count() -1 to skip BoxInfo_____
-            for (size_t j = 0; j < dir.count() - 1 && box.getMessages().size() < box.getInfo().maxMessages(); j++)
+            for (size_t j = 0; j < dir.good() && dir.count() && box.getMessages().size() < box.getInfo().maxMessages(); j++)
             {
-                if (dir.item(j + boxDataMod) == "BoxInfo_____")
-                {
-                    boxDataMod++;
-                    j--;
-                    continue;
-                }
-                in = fopen(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j + boxDataMod)).c_str(), "r");
+                in = fopen(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
                 size_t messageSize = ftell(in);
                 fseek(in, 0, SEEK_SET);
@@ -221,12 +213,12 @@ void importBoxes(bool del)
                 box.addMessage(message);
                 if (del)
                 {
-                    remove(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j + boxDataMod)).c_str());
+                    remove(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j)).c_str());
                 }
             }
 
             dir = STDirectory("/3ds/CECTool/" + boxId + "/OutBox__");
-            for (size_t j = 0; j < dir.count() - 2 && box.getMessages().size() < box.getInfo().maxMessages(); j++)
+            for (size_t j = 0; dir.good() && j < dir.count() && box.getMessages().size() < box.getInfo().maxMessages(); j++)
             {
                 in = fopen(("/3ds/CECTool/" + boxId + "/OutBox__/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
@@ -397,7 +389,7 @@ void dumpBoxes()
                 }
                 oldSizeWritten = sizeWritten;
                 CECDU_ReadRawFile(read, &sizeWritten);
-                CECDU_OpenRawFile(id, CECMESSAGE_BOX_TITLE, CEC_READ | CEC_CHECK);
+                CECDU_OpenRawFile(id, CECMESSAGE_BOX_TITLE, CEC_READ | CEC_CHECK); // Reopen file
             }
             while (read[sizeWritten / 2 - 1] != u'\0');
             CECDU_ReadRawFile(read, &sizeWritten);
@@ -432,7 +424,39 @@ void dumpBoxes()
 void waitForInput()
 {
     while (aptMainLoop() && !hidKeysDown()) hidScanInput();
+    hidScanInput();
 }
+
+/*
+ A testing function for CECDU_SetData
+ Findings:
+    0: opens OBIndex and OutBox BoxInfo
+    1-3: Invalid argument errors
+        - Perhaps change buffer size?
+    4: deletes the CEC directory
+    5: commits changes?
+    6: archive not mounted error
+    7+: does nothing; returns 0
+*/
+// int main()
+// {
+//     u8 dummy[10000];
+//     gfxInitDefault();
+//     hidInit();
+//     hidScanInput();
+//     sdmcInit();
+//     consoleInit(GFX_TOP, nullptr);
+//     cecduInit();
+//     Result res;
+//     for (u32 i = 0; i < 0x10000; i++)
+//     {
+//         waitForInput();
+//         if (R_SUCCEEDED(res = CECDU_SetData(0x0010bf00, i, dummy, 10000))) printf("%i", i);
+//         else printf("%X", res);
+//     }
+//     cecduExit();
+//     return 0;
+// }
 
 int main()
 {
@@ -491,105 +515,5 @@ int main()
         // }
     }
     cecduExit();
-    return 0;
-}
-
-int main4() // Deletes all messages from Kirby
-{
-    Result res;
-    gfxInitDefault();
-    hidInit();
-    consoleInit(GFX_TOP, nullptr);
-    if (R_FAILED(res = cecduInit())) printf("Init: %X", res);
-    Box kirby(0x0010bf00);
-    if (R_FAILED(res = kirby.clearMessages())) printf("Clearing messages: %X", res);
-    return 0;
-}
-
-int main3() // Reads all boxes and their message IDs
-{
-    Result res;
-    gfxInitDefault();
-    hidInit();
-    consoleInit(GFX_TOP, nullptr);
-    if (R_FAILED(res = cecduInit())) printf("Init: %X", res);
-    boxList list;
-    size_t sizeWritten = sizeof(struct boxList);
-    CECDU_OpenRawFile(0x0, CEC_PATH_MBOX_LIST, CEC_READ | CEC_CHECK);
-    CECDU_ReadRawFile(&list, &sizeWritten);
-    for (size_t i = 0; i < list.numBoxes; i++)
-    {
-        u32 id = strtoul(list.boxId[i], NULL, 16);
-        Box box(id);
-        printf("Box %u: %s %X\n", i, list.boxId[i], strtoul(list.boxId[i], NULL, 16));
-        // for (auto message : box.messageNames())
-        // {
-        //     printf("    %s\n", message.c_str());
-        // }
-        while (aptMainLoop() && !(hidKeysDown() & KEY_A)) hidScanInput();
-        hidScanInput();
-    }
-    while (aptMainLoop() && !(hidKeysDown() & KEY_START)) hidScanInput();
-    cecduExit();
-    hidExit();
-    gfxExit();
-    return 0;
-}
-
-int main2()
-{
-    gfxInitDefault();
-    hidInit();
-    consoleInit(GFX_TOP, nullptr);
-    printf("Here goes nothing");
-    Result res = cecduInit();
-    if (R_FAILED(res)) printf("Init\n%X", res);
-    // CECDU_WriteMessage(0x0010bf00, false, id, (void*) "What happens now?", 18);
-    // u8 dataRead[30];
-    // std::fill_n(dataRead, 30, '\0');
-    size_t bufferSize = 30;
-    // CECDU_ReadMessage(0x0010bf00, false, id, (void*) dataRead, &bufferSize);
-    // dataRead[29] = '\0';
-    // printf("\n%i bytes read", bufferSize);
-    // printf("\nData: %s", dataRead);
-    u8* infoRead = new u8[32];
-    bufferSize = 32;
-    std::fill_n(infoRead, 32, '\0');
-    res = CECDU_OpenAndRead(0x0010bf00, CEC_PATH_INBOX_INFO, CEC_READ | CEC_WRITE | CEC_CHECK, infoRead, &bufferSize);
-    if (R_FAILED(res)) printf("Read info 1\n%X", res);
-    BoxInfo info(infoRead, false);
-    if (info.currentMessages() > 0)
-    {
-        delete[] infoRead;
-        infoRead = new u8[bufferSize = info.fileSize()];
-        res = CECDU_OpenAndRead(0x0010bf00, CEC_PATH_INBOX_INFO, CEC_READ | CEC_WRITE | CEC_CHECK, infoRead, &bufferSize);
-        if (R_FAILED(res)) printf("Read info 2\n%X", res);
-        info = BoxInfo(infoRead);
-    }
-    std::ifstream in("/data.cec", std::ios::ate | std::ios::in);
-    size_t size = in.tellg();
-    in.seekg(0, std::ios::beg);
-    delete[] infoRead;
-    infoRead = new u8[size];
-    in.read((char*)infoRead, size);
-    in.close();
-    Message m(infoRead);
-    info.addMessage(m);
-    cecMessageId id;
-    MessageInfo mInfo = m.getInfo();
-    // std::copy(mInfo.messageID(), mInfo.messageID() + 8, id.data);
-    res = CECDU_WriteMessage(0x0010bf00, false, id, infoRead, size);
-    if (R_FAILED(res)) printf("Write Message\n%X", res);
-    std::vector<u8> data = info.data();
-    res = CECDU_Delete(0x0010bf00, CEC_PATH_INBOX_INFO, false, id);
-    if (R_FAILED(res)) printf("Delete Info\n%X", res);
-    res = CECDU_OpenAndWrite(0x0010bf00, CEC_PATH_INBOX_INFO, CEC_WRITE | CEC_CHECK, data.data(), data.size());
-    if (R_FAILED(res)) printf("Write Info\n%X", res);
-    Box kirby(0x0010bf00);
-    //printf("%s", kirby.messageNames().c_str());
-    while (aptMainLoop() && !(hidKeysDown() & KEY_START)) hidScanInput();
-    hidExit();
-    cecduExit();
-    gfxExit();
     return 0;
 }

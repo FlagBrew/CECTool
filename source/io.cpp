@@ -25,9 +25,21 @@
 */
 
 #include "io.hpp"
+#include <dirent.h>
 
-bool io::exists(const std::string& name)
+bool io::fileExists(const std::string& name)
 {
     struct stat buffer;
     return (stat (name.c_str(), &buffer) == 0);
+}
+
+bool io::folderExists(const std::string& name)
+{
+    DIR* dir = opendir(name.c_str());
+    if (dir)
+    {
+        closedir(dir);
+        return true;
+    }
+    return false;
 }

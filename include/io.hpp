@@ -34,7 +34,8 @@
 
 namespace io
 {
-    bool exists(const std::string& name);
-}
+    bool fileExists(const std::string& name);
+    bool folderExists(const std::string& name);
+};
 
 #endif

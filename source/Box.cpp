@@ -52,10 +52,11 @@ Result Box::clearMessages()
     Result res;
     for (auto message : info.getMessages())
     {
-        CECDU_Delete(id, outBox ? CEC_PATH_OUTBOX_MSG : CEC_PATH_INBOX_MSG, outBox, message.messageID());
+        cecMessageId mId = message.messageID();
+        CECDU_Delete(id, outBox ? CEC_PATH_OUTBOX_MSG : CEC_PATH_INBOX_MSG, outBox, &mId);
     }
     info.clearMessages();
-    if (R_FAILED(res = CECDU_Delete(id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO, outBox, {}))) return res;
+    if (R_FAILED(res = CECDU_Delete(id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO, outBox, nullptr))) return res;
     auto data = info.data();
     if (R_FAILED(res = CECDU_OpenAndWrite(id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO, CEC_WRITE | CEC_CHECK, data.data(), data.size()))) return res;
     return 0;
@@ -63,14 +64,14 @@ Result Box::clearMessages()
 
 Result Box::removeMessage(cecMessageId messageId)
 {
-    Result res = CECDU_Delete(id, outBox ? CEC_PATH_OUTBOX_MSG : CEC_PATH_INBOX_MSG, outBox, messageId);
+    Result res = CECDU_Delete(id, outBox ? CEC_PATH_OUTBOX_MSG : CEC_PATH_INBOX_MSG, outBox, &messageId);
     info.deleteMessage(messageId);
     return res;
 }
 
 Result Box::saveInfo() const
 {
-    Result res = CECDU_Delete(id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO, outBox, {});
+    Result res = CECDU_Delete(id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO, outBox, nullptr);
     if (R_FAILED(res))
     {
         return res;
@@ -83,7 +84,7 @@ Result Box::saveInfo() const
     }
     if (index)
     {
-        res = CECDU_Delete(id, CEC_PATH_OUTBOX_INDEX, true, {});
+        res = CECDU_Delete(id, CEC_PATH_OUTBOX_INDEX, true, nullptr);
         if (R_FAILED(res))
         {
             return res;
