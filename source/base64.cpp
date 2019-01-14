@@ -77,11 +77,11 @@ unsigned char *base64_decode(const char *data, size_t input_length, size_t *outp
 
 std::string base64_encode(const char *data, size_t input_length)
 {
-    size_t output_length = 4 * ((input_length + 2) / 3);
+    //size_t output_length = 4 * ((input_length + 2) / 3); unused
 
     std::string ret = "";
 
-    for (int i = 0, j = 0; i < input_length; j += 4) {
+    for (size_t i = 0, j = 0; i < input_length; j += 4) {
 
         uint32_t octet_a = i < input_length ? (unsigned char)data[i++] : 0;
         uint32_t octet_b = i < input_length ? (unsigned char)data[i++] : 0;
