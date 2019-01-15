@@ -8,7 +8,7 @@
 
 extern "C"
 {
-#include "cecdu.h"
+#include "3ds/services/cecdu.h"
 }
 
 static bool operator == (const cecMessageId& id1, const cecMessageId& id2)

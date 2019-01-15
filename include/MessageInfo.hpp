@@ -6,8 +6,9 @@
 #include <vector>
 #include <string.h>
 #include <ctime>
+
 extern "C" {
-#include "cecdu.h"
+#include "3ds/services/cecdu.h"
 }
 
 struct Timestamp

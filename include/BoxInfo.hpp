@@ -4,6 +4,7 @@
 #include <3ds.h>
 #include <vector>
 #include "Message.hpp"
+
 class BoxInfo
 {
 private:

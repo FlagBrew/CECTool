@@ -1,6 +1,7 @@
 #include "MessageInfo.hpp"
+
 extern "C" {
-#include "cecdu.h"
+#include "3ds/services/cecdu.h"
 }
 
 cecMessageId MessageInfo::messageID() const

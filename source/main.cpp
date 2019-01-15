@@ -6,9 +6,10 @@
 #include "STDirectory.hpp"
 #include "base64.hpp"
 #include "io.hpp"
+
 extern "C"
 {
-#include "cecdu.h"
+#include "3ds/services/cecdu.h"
 }
 
 int __stacksize__ = 64 * 1024;

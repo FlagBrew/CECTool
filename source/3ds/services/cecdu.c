@@ -1,4 +1,4 @@
-#include "cecdu.h"
+#include "3ds/services/cecdu.h"
 #include <3ds/synchronization.h>
 #include <3ds/svc.h>
 #include <3ds/srv.h>

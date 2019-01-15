@@ -2,6 +2,7 @@
 #define MESSAGE_HPP
 
 #include "MessageInfo.hpp"
+
 class Message
 {
 private:
