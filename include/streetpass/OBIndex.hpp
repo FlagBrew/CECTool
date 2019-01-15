@@ -3,8 +3,8 @@
 
 #include <3ds.h>
 #include <vector>
-#include "Message.hpp"
-#include "MessageInfo.hpp"
+#include "streetpass/Message.hpp"
+#include "streetpass/MessageInfo.hpp"
 
 extern "C"
 {

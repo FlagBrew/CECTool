@@ -44,8 +44,8 @@ GFXBUILD	:=	$(BUILD)
 #ROMFS		:=	romfs
 #GFXBUILD	:=	$(ROMFS)/gfx
 
-SOURCES		+= source/3ds/services
-INCLUDES	+= include/3ds/services
+SOURCES		+= source/3ds/services source/streetpass
+INCLUDES	+= include/3ds/services include/streetpass
 
 #---------------------------------------------------------------------------------
 # options for code generation

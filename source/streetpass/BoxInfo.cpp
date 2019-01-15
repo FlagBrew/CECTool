@@ -1,4 +1,4 @@
-#include "BoxInfo.hpp"
+#include "streetpass/BoxInfo.hpp"
 
 extern "C" {
 #include "3ds/services/cecdu.h"

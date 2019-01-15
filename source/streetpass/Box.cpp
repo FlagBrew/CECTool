@@ -1,4 +1,4 @@
-#include "Box.hpp"
+#include "streetpass/Box.hpp"
 #include <string.h>
 
 Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)

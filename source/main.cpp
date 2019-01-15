@@ -1,8 +1,8 @@
 #include <3ds.h>
 #include <stdio.h>
 #include <fstream>
-#include "BoxInfo.hpp"
-#include "Box.hpp"
+#include "streetpass/BoxInfo.hpp"
+#include "streetpass/Box.hpp"
 #include "STDirectory.hpp"
 #include "base64.hpp"
 #include "io.hpp"

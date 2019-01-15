@@ -1,8 +1,8 @@
 #ifndef BOX_HPP
 #define BOX_HPP
 
-#include "BoxInfo.hpp"
-#include "OBIndex.hpp"
+#include "streetpass/BoxInfo.hpp"
+#include "streetpass/OBIndex.hpp"
 #include <stdio.h>
 #include <string>
 

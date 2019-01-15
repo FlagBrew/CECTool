@@ -3,7 +3,7 @@
 
 #include <3ds.h>
 #include <vector>
-#include "Message.hpp"
+#include "streetpass/Message.hpp"
 
 class BoxInfo
 {

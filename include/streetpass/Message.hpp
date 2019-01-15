@@ -1,7 +1,7 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
-#include "MessageInfo.hpp"
+#include "streetpass/MessageInfo.hpp"
 
 class Message
 {
