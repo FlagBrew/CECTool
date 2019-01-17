@@ -37,6 +37,7 @@ void RunAllTests() {
     printf("Running All Tests\n");
 
     // Make sure test output dir "/3ds/CECTool/tests/" exists
+    mkdir("/3ds/CECTool", 777);
     mkdir(rootTestsPath.c_str(), 777);
 
     RunAllFileTests();
