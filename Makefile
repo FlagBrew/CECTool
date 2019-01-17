@@ -47,6 +47,9 @@ GFXBUILD	:=	$(BUILD)
 SOURCES		+= source/3ds/services source/streetpass
 INCLUDES	+= include/3ds/services include/streetpass
 
+SOURCES		+= source/tests source/tests/files source/tests/functions
+INCLUDES	+= include/tests include/tests/files include/tests/functions
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------

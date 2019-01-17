@@ -7,6 +7,8 @@
 #include "base64.hpp"
 #include "io.hpp"
 
+#include "tests/tests.hpp"
+
 extern "C"
 {
 #include "3ds/services/cecdu.h"
@@ -506,6 +508,13 @@ int main()
         //     waitForInput();
         //     showMenu = true;
         // }
+        else if (down & KEY_L) {
+            printf("Running tests...\n");
+            Tests::RunAllTests();
+            printf("Done!\n");
+            waitForInput();
+            showMenu = true;
+        }
     }
     cecduExit();
     return 0;
