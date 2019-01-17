@@ -1,7 +1,7 @@
 #include <3ds.h>
 #include <fstream>
 #include <sys/stat.h>
-#include "base64.hpp"
+#include "common/base64.hpp"
 #include "export.hpp"
 #include "streetpass/BoxInfo.hpp"
 #include "streetpass/Box.hpp"

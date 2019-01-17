@@ -1,8 +1,9 @@
 #include <3ds.h>
 #include <fstream>
 #include "import.hpp"
-#include "io.hpp"
-#include "STDirectory.hpp"
+#include "common/io.hpp"
+#include "common/STDirectory.hpp"
+#include "common/util.hpp"
 #include "streetpass/BoxInfo.hpp"
 #include "streetpass/Box.hpp"
 #include "streetpass/MBoxList.hpp"
@@ -13,12 +14,6 @@ extern "C"
 }
 
 using Streetpass::boxList;
-
-void waitForInput()
-{
-    while (aptMainLoop() && !hidKeysDown()) hidScanInput();
-    hidScanInput();
-}
 
 void createBox(std::string id)
 {

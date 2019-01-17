@@ -1,4 +1,5 @@
 #include <3ds.h>
+#include "common/util.hpp"
 #include "create.hpp"
 #include "export.hpp"
 #include "import.hpp"

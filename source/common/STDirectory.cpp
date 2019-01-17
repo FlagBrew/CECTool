@@ -24,7 +24,7 @@
 *         reasonable ways as different from the original version.
 */
 
-#include "STDirectory.hpp"
+#include "common/STDirectory.hpp"
 
 STDirectory::STDirectory(const std::string& root)
 {

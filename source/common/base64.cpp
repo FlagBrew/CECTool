@@ -24,7 +24,7 @@
 *         reasonable ways as different from the original version.
 */
 
-#include "base64.hpp"
+#include "common/base64.hpp"
 
 static char encoding_table[] = {
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',

@@ -24,7 +24,7 @@
 *         reasonable ways as different from the original version.
 */
 
-#include "io.hpp"
+#include "common/io.hpp"
 #include <dirent.h>
 
 bool io::fileExists(const std::string& name)
