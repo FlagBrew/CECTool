@@ -4,6 +4,8 @@ extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
+namespace Streetpass {
+
 cecMessageId MessageInfo::messageID() const
 {
     cecMessageId id;
@@ -93,3 +95,5 @@ void MessageInfo::updateTimes()
     }
     receivedTime(current);
 }
+
+} // namespace Streetpass

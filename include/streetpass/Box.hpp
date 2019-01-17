@@ -1,15 +1,16 @@
-#ifndef BOX_HPP
-#define BOX_HPP
+#pragma once
 
-#include "streetpass/BoxInfo.hpp"
-#include "streetpass/OBIndex.hpp"
 #include <stdio.h>
 #include <string>
+#include "streetpass/BoxInfo.hpp"
+#include "streetpass/OBIndex.hpp"
 
 extern "C"
 {
 #include "3ds/services/cecdu.h"
 }
+
+namespace Streetpass {
 
 class Box
 {
@@ -36,4 +37,4 @@ public:
     Result saveInfo() const;
 };
 
-#endif
+} // namespace Streetpass

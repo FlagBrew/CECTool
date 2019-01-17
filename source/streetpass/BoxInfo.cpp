@@ -5,6 +5,8 @@ extern "C" {
 #include <string.h>
 }
 
+namespace Streetpass {
+
 bool BoxInfo::addMessage(const MessageInfo& message)
 {
     if (message.messageSize() + currentBoxSize() + 0x70 > maxBoxSize() || currentMessages() + 1 > maxMessages() || std::find(messages.begin(), messages.end(), message) != messages.end())
@@ -53,3 +55,5 @@ void BoxInfo::deleteMessage(cecMessageId id)
         }
     }
 }
+
+} // namespace Streetpass

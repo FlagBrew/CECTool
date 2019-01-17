@@ -1,5 +1,4 @@
-#ifndef MESSAGEINFO_HPP
-#define MESSAGEINFO_HPP
+#pragma once
 
 #include <3ds.h>
 #include <algorithm>
@@ -10,6 +9,8 @@
 extern "C" {
 #include "3ds/services/cecdu.h"
 }
+
+namespace Streetpass {
 
 struct Timestamp
 {
@@ -82,4 +83,4 @@ public:
     void updateTimes();
 };
 
-#endif
+} // namespace Streetpass

@@ -12,7 +12,9 @@ extern "C"
 #include "3ds/services/cecdu.h"
 }
 
+using Streetpass::Box;
 using Streetpass::boxList;
+using Streetpass::Message;
 
 void importBoxes(bool del)
 {

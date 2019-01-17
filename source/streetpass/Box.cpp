@@ -2,6 +2,8 @@
 #include <string.h>
 #include <inttypes.h>
 
+namespace Streetpass {
+
 Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
 {
     Result res;
@@ -103,3 +105,5 @@ Result Box::saveInfo() const
     }
     return res;
 }
+
+} // namespace Streetpass

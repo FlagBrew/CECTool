@@ -1,5 +1,4 @@
-#ifndef OBINDEX_HPP
-#define OBINDEX_HPP
+#pragma once
 
 #include <3ds.h>
 #include <vector>
@@ -13,8 +12,11 @@ extern "C"
 
 static bool operator == (const cecMessageId& id1, const cecMessageId& id2)
 {
+    // Isn't this only comparing one byte?
     return !memcmp(&id1, &id2, 1);
 }
+
+namespace Streetpass {
 
 class OBIndex
 {
@@ -27,51 +29,14 @@ private:
     } obIndex;
     std::vector<cecMessageId> messages;
 public:
-    OBIndex(u8* data, bool cont)
-    {
-        std::copy(data, data + 8, (u8*)&obIndex);
-        if (cont)
-        {
-            for (size_t i = 0; i < obIndex.messages; i++)
-            {
-                cecMessageId id;
-                std::copy(data + 8 + i * 8, data + 8 + i * 8 + 8, id.data);
-                messages.push_back(id);
-            }
-        }
-    }
+    explicit OBIndex(u8* data, bool cont);
+    ~OBIndex() = default;
 
-    std::vector<u8> data() const
-    {
-        std::vector<u8> ret;
-        u8* info = (u8*)&obIndex;
-        for (size_t i = 0; i < sizeof(obIndex); i++)
-        {
-            ret.push_back(info[i]);
-        }
-        for (auto id : messages)
-        {
-            for (size_t i = 0; i < 8; i++)
-            {
-                ret.push_back(id.data[i]);
-            }
-        }
-        return ret;
-    }
-    void addMessage(const MessageInfo& message)
-    {
-        cecMessageId id = message.messageID();
-        if (std::find(messages.cbegin(), messages.cend(), id) == messages.end())
-        {
-            messages.push_back(id);
-            obIndex.messages++;
-        }
-    }
-    void addMessage(const Message& message)
-    {
-        addMessage(message.getInfo());
-    }
-    u32 size() const { return obIndex.messages; }
+    void addMessage(const Message& message);
+    void addMessage(const MessageInfo& message);
+
+    std::vector<u8> data() const;
+    u32 size() const;
 };
 
-#endif
+} // namespace Streetpass

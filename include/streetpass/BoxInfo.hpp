@@ -1,9 +1,10 @@
-#ifndef BOXINFO_HPP
-#define BOXINFO_HPP
+#pragma once
 
 #include <3ds.h>
 #include <vector>
 #include "streetpass/Message.hpp"
+
+namespace Streetpass {
 
 class BoxInfo
 {
@@ -48,4 +49,4 @@ public:
     void deleteMessage(cecMessageId id);
 };
 
-#endif
+} // namespace Streetpass
