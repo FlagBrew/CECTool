@@ -1,5 +1,6 @@
 #include "streetpass/Box.hpp"
 #include <string.h>
+#include <inttypes.h>
 
 Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
 {
@@ -11,7 +12,7 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
 
     res = CECDU_OpenAndRead(bufferSize, id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO,
                             CEC_READ | CEC_CHECK, in, &readSize);
-    if (R_FAILED(res)) printf("Read info 1\n%X", res);
+    if (R_FAILED(res)) printf("Read info 1: %" PRIX32 "\n", res);
 
     info = BoxInfo(in, false);
     if (info.currentMessages() > 0)
@@ -22,7 +23,7 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
 
         res = CECDU_OpenAndRead(bufferSize, id, outBox ? CEC_PATH_OUTBOX_INFO : CEC_PATH_INBOX_INFO,
                                 CEC_READ | CEC_CHECK, in, &readSize);
-        if (R_FAILED(res)) printf("Read info 2\n%X", res);
+        if (R_FAILED(res)) printf("Read info 2: %" PRIX32 "\n", res);
 
         info = BoxInfo(in);
     }
@@ -34,7 +35,7 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
         in = new u8[bufferSize];
 
         res = CECDU_OpenAndRead(bufferSize, id, CEC_PATH_OUTBOX_INDEX, CEC_READ | CEC_CHECK, in, &readSize);
-        if (R_FAILED(res)) printf("Read OBIndex 1\n%X", res);
+        if (R_FAILED(res)) printf("Read OBIndex 1: %" PRIX32 "\n", res);
 
         index = new OBIndex(in, false);
         if (index->size() > 0)
@@ -44,7 +45,7 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
             in = new u8[bufferSize];
 
             res = CECDU_OpenAndRead(bufferSize, id, CEC_PATH_OUTBOX_INDEX, CEC_READ | CEC_CHECK, in, &readSize);
-            if (R_FAILED(res)) printf("Read OBIndex 2\n%X", res);
+            if (R_FAILED(res)) printf("Read OBIndex 2: %" PRIX32 "\n", res);
 
             delete index;
             index = new OBIndex(in, true);

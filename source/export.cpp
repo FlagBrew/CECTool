@@ -1,4 +1,5 @@
 #include <3ds.h>
+#include <inttypes.h>
 #include <fstream>
 #include <sys/stat.h>
 #include "common/base64.hpp"
@@ -92,7 +93,7 @@ void dumpBoxes()
         fclose(out);
         if (R_FAILED(res = CECDU_Open(id, CEC_PATH_OUTBOX_INDEX, CEC_READ | CEC_CHECK, nullptr)))
         {
-            printf("OBIndex Read: %X", res);
+            printf("OBIndex Read: %" PRIX32 "\n", res);
         }
         else
         {
@@ -120,7 +121,7 @@ void dumpBoxes()
         else
         {
             delete[] read;
-            printf("MBoxInfo Read: %X", id);
+            printf("MBoxInfo Read: %" PRIX32 "\n", id);
             continue;
         }
         bufferSize = 4608;
@@ -136,7 +137,7 @@ void dumpBoxes()
         else
         {
             delete[] read;
-            printf("MBoxData.001 Read: %X", id);
+            printf("MBoxData.001 Read: %" PRIX32 "\n", id);
             continue;
         }
 
@@ -154,7 +155,7 @@ void dumpBoxes()
         }
         else
         {
-            printf("MBoxData.010 Read: %X", id);
+            printf("MBoxData.010 Read: %" PRIX32 "\n", id);
             continue;
         }
         bufferSize = 8;
@@ -170,7 +171,7 @@ void dumpBoxes()
         else
         {
             delete[] read;
-            printf("MBoxData.050 Read: %X", id);
+            printf("MBoxData.050 Read: %" PRIX32 "\n", id);
             continue;
         }
     }

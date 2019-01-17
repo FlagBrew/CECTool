@@ -1,4 +1,5 @@
 #include <3ds.h>
+#include <inttypes.h>
 #include "common/util.hpp"
 #include "create.hpp"
 #include "export.hpp"
@@ -20,7 +21,7 @@ int main()
     hidScanInput();
     sdmcInit();
     consoleInit(GFX_TOP, nullptr);
-    if (R_FAILED(res = cecduInit())) printf("Init: %X\n", res);
+    if (R_FAILED(res = cecduInit())) printf("Init: %" PRIX32 "\n", res);
     bool showMenu = true;
     u32 down = hidKeysDown();
     while (aptMainLoop() && !(down & KEY_START))
