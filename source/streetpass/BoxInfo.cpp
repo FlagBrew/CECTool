@@ -45,7 +45,7 @@ void BoxInfo::deleteMessage(cecMessageId id)
 {
     for (auto i = messages.begin(); i != messages.end(); i++)
     {
-        if (!memcmp(i->messageID().data, id.data, 8))
+        if (memcmp(i->messageID().data, id.data, 8) == 0)
         {
             messages.erase(i);
             fileSize(fileSize() - 0x70);
