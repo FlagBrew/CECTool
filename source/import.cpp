@@ -13,14 +13,14 @@ extern "C"
 }
 
 using Streetpass::Box;
-using Streetpass::boxList;
+using Streetpass::MBoxListHeader;
 using Streetpass::Message;
 
 void importBoxes(bool del)
 {
     //Result res; currently unused
-    boxList list;
-    u32 size = sizeof(boxList);
+    MBoxListHeader list;
+    u32 size = sizeof(MBoxListHeader);
     CECDU_Open(0x0, CEC_PATH_MBOX_LIST, CEC_READ | CEC_CHECK, nullptr);
     CECDU_Read(size, &list, nullptr);
     STDirectory dir("/3ds/CECTool");
@@ -41,7 +41,7 @@ void importBoxes(bool del)
     std::vector<int> availableBoxes;
     for (u32 i = 0; i < list.numBoxes; i++)
     {
-        if (std::find(boxes.begin(), boxes.end(), list.boxId[i]) != boxes.end())
+        if (std::find(boxes.begin(), boxes.end(), list.boxIds[i]) != boxes.end())
         {
             availableBoxes.push_back(i);
         }
@@ -57,8 +57,8 @@ void importBoxes(bool del)
         std::string boxId;
         for (size_t i = 0; i < availableBoxes.size(); i++)
         {
-            boxId = list.boxId[availableBoxes[i]];
-            currentId = std::stoul(list.boxId[availableBoxes[i]], nullptr, 16);
+            boxId = list.boxIds[availableBoxes[i]];
+            currentId = std::stoul(list.boxIds[availableBoxes[i]], nullptr, 16);
             dir = STDirectory("/3ds/CECTool/" + boxId + "/InBox___");
             FILE* in;
             u8* data;

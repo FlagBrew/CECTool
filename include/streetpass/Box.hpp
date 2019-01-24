@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <string>
+#include <memory>
+#include <vector>
 #include "streetpass/BoxInfo.hpp"
 #include "streetpass/OBIndex.hpp"
 
@@ -16,22 +18,20 @@ class Box
 {
 private:
     u32 id;
-    BoxInfo info;
     bool outBox;
-    OBIndex* index = nullptr;
+    BoxInfo info;
+    //OBIndex* index = nullptr;
+    //std::unique_ptr<BoxInfo> info;
+    std::unique_ptr<OBIndex> index;
 public:
     Box(u32 id, bool outBox = false);
-    ~Box()
-    {
-        if (index)
-        {
-            delete index;
-        }
-    }
+    ~Box() = default;
     std::vector<MessageInfo> getMessages() const { return info.getMessages(); }
+
     const BoxInfo& getInfo() const { return info; }
     BoxInfo& getInfo() { return info; }
-    Result addMessage(Message& message);
+
+    Result addMessage(const Message& message);
     Result clearMessages();
     Result removeMessage(cecMessageId);
     Result saveInfo() const;

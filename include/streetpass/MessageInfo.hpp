@@ -61,7 +61,7 @@ public:
     }
     bool operator ==(const MessageInfo& message)
     {
-        return !(memcmp(&info, &(message.info), sizeof(info)));
+        return (memcmp(&info, &(message.info), sizeof(info)) == 0);
     }
     u32 messageSize() const { return info.messageSize; }
     std::vector<u8> data() const

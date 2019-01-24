@@ -15,21 +15,21 @@ extern "C"
 
 using Streetpass::Box;
 using Streetpass::BoxInfo;
-using Streetpass::boxList;
+using Streetpass::MBoxListHeader;
 using Streetpass::Message;
 
 void dumpBoxes()
 {
     Result res;
-    boxList list;
-    u32 boxListSize = sizeof(boxList);
-    CECDU_OpenAndRead(boxListSize, 0x0, CEC_PATH_MBOX_LIST, CEC_READ | CEC_CHECK, (u8*)&list, nullptr);
+    MBoxListHeader list;
+    u32 boxListSize = sizeof(MBoxListHeader);
+    CECDU_OpenAndRead(boxListSize, 0x0, CEC_PATH_MBOX_LIST, CEC_READ, (u8*)&list, nullptr);
     mkdir("/3ds/CECTool", 777);
     mkdir("/3ds/CECTool/template", 777);
     FILE* out;
     for (u32 i = 0; i < list.numBoxes; i++)
     {
-        const std::string boxId = list.boxId[i];
+        const std::string boxId = list.boxIds[i];
         std::string path = "/3ds/CECTool/" + boxId;
         std::string templatePath = "/3ds/CECTool/template/" + boxId;
         mkdir(path.c_str(), 777);

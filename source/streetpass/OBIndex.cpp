@@ -1,18 +1,19 @@
 #include "streetpass/OBIndex.hpp"
+#include <cstring>
 
 namespace Streetpass {
 
-OBIndex::OBIndex(u8* data, bool cont) {
-    std::copy(data, data + 8, (u8*)&obIndex);
-        if (cont)
-        {
-            for (size_t i = 0; i < obIndex.numMessages; i++)
-            {
-                cecMessageId id;
-                std::copy(data + 8 + i * 8, data + 8 + i * 8 + 8, id.data);
-                messages.push_back(id);
-            }
-        }
+OBIndex::OBIndex() : obIndex(), messages() {
+
+}
+
+OBIndex::OBIndex(const std::vector<u8>& buffer) : obIndex(), messages() {
+    std::memcpy(&obIndex, buffer.data(), sizeof(OBIndexHeader));
+    const u32 numMessages = NumMessages();
+    if (numMessages > 0) {
+        messages.resize(numMessages);
+        std::memcpy(messages.data(), buffer.data() + sizeof(OBIndexHeader), numMessages * sizeof(CecMessageId));
+    }
 }
 
 bool OBIndex::addMessage(const Message& message) {
@@ -34,23 +35,17 @@ bool OBIndex::addMessage(const MessageInfo& messageInfo) {
 }
 
 std::vector<u8> OBIndex::data() const {
-    std::vector<u8> ret;
-    u8* info = (u8*)&obIndex;
-    for (size_t i = 0; i < sizeof(obIndex); i++)
-    {
-        ret.push_back(info[i]);
-    }
-    for (auto id : messages)
-    {
-        for (size_t i = 0; i < 8; i++)
-        {
-            ret.push_back(id.data[i]);
-        }
-    }
+    std::vector<u8> ret(FileSize());
+    std::memcpy(ret.data(), &obIndex, sizeof(OBIndexHeader));
+    std::memcpy(ret.data() + sizeof(OBIndexHeader), messages.data(), messages.size() * sizeof(CecMessageId));
     return ret;
 }
 
-u32 OBIndex::size() const {
+u32 OBIndex::FileSize() const {
+    return sizeof(OBIndexHeader) + sizeof(CecMessageId) * obIndex.numMessages;
+}
+
+u32 OBIndex::NumMessages() const {
     return obIndex.numMessages;
 }
 
