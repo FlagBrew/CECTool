@@ -3,8 +3,9 @@
 #include <3ds.h>
 #include <algorithm>
 #include <vector>
-#include <string.h>
+#include <string>
 #include <ctime>
+#include <array>
 
 extern "C" {
 #include "3ds/services/cecdu.h"
@@ -21,66 +22,62 @@ struct Timestamp
     u8 hour;
     u8 minute;
     u8 second;
-    u16 millisecond; // Likely, not certain
+    u16 millisecond;
 };
+static_assert(sizeof(Timestamp) == 0x0C, "Timestamp struct as incorrect size.");
+
+struct CecMessageHeader
+{
+    u16 magic; // 0x6060 ``
+    u16 padding;
+    u32 messageSize;
+    u32 totalHeaderSize;
+    u32 bodySize;
+    u32 titleID;
+    u32 titleID2;
+    u32 batchID;
+    u32 unknown_1;
+    std::array<u8, 8> messageID;
+    u32 messageVersion;
+    std::array<u8, 8> messageID2;
+    u8 flags;
+    u8 sendMethod;
+    u8 unopened;
+    u8 newFlag;
+    u64 senderID;
+    u64 senderID2;
+    Timestamp sent;
+    Timestamp received;
+    Timestamp created;
+    u8 sendCount;
+    u8 forwardCount;
+    u16 userData;
+};
+static_assert(sizeof(CecMessageHeader) == 0x70, "CecMessageHeader struct as incorrect size.");
 
 class MessageInfo
 {
-private:
-    struct
-    {
-        u8 magic[2];
-        u8 padding[2];
-        u32 messageSize;
-        u32 totalHeaderSize;
-        u32 bodySize;
-        u32 titleID;
-        u32 titleID2;
-        u32 batchID;
-        char unknown_1[4];
-        u8 messageID[8];
-        u32 messageVersion;
-        u8 messageID2[8];
-        u8 flags;
-        u8 sendMethod;
-        u8 unopened;
-        u8 newFlag;
-        u8 senderID[8];
-        u8 senderID2[8];
-        Timestamp sent;
-        Timestamp received;
-        Timestamp created;
-        u8 sendCount;
-        u8 forwardCount;
-        u8 userData[2];
-    } info;
 public:
-    MessageInfo(u8* data)
-    {
-        std::copy(data, data + 0x70, (u8*)&info);
-    }
-    bool operator ==(const MessageInfo& message)
-    {
-        return (memcmp(&info, &(message.info), sizeof(info)) == 0);
-    }
-    u32 messageSize() const { return info.messageSize; }
-    std::vector<u8> data() const
-    {
-        std::vector<u8> ret;
-        u8* infoPtr = (u8*)&info;
-        for (size_t i = 0; i < sizeof(info); i++)
-        {
-            ret.push_back(infoPtr[i]);
-        }
-        return ret;
-    }
+    explicit MessageInfo(const std::vector<u8>& buffer);
+    ~MessageInfo() = default;
+
+    std::vector<u8> data() const;
+
     cecMessageId messageID() const;
-    Timestamp sentTime() const { return info.sent; }
-    Timestamp receivedTime() const { return info.received; }
-    Timestamp createdTime() const { return info.created; }
-    void sentTime(Timestamp t) { info.sent = t; }
-    void receivedTime(Timestamp t) { info.received = t; }
+    u32 messageSize() const;
+
+    Timestamp createdTime() const;
+    Timestamp receivedTime() const;
+    Timestamp sentTime() const;
+
+    void createdTime(const Timestamp& timestamp);
+    void receivedTime(const Timestamp& timestamp);
+    void sentTime(const Timestamp& timestamp);
+
     void updateTimes();
+
+private:
+    CecMessageHeader messageHeader;
 };
 
 } // namespace Streetpass

@@ -60,21 +60,18 @@ void importBoxes(bool del)
             boxId = list.boxIds[availableBoxes[i]];
             currentId = std::stoul(list.boxIds[availableBoxes[i]], nullptr, 16);
             dir = STDirectory("/3ds/CECTool/" + boxId + "/InBox___");
-            FILE* in;
-            u8* data;
             Box box(currentId, false);
             for (size_t j = 0; j < dir.good() && dir.count() && box.getMessages().size() < box.getInfo().maxMessages(); j++)
             {
-                in = fopen(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j)).c_str(), "r");
+                FILE* in = fopen(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
                 size_t messageSize = ftell(in);
                 fseek(in, 0, SEEK_SET);
-                data = new u8[messageSize];
-                fread(data, 1, messageSize, in);
+                std::vector<u8> buffer(messageSize);
+                fread(buffer.data(), 1, messageSize, in);
                 fclose(in);
 
-                Message message(data);
-                delete[] data;
+                Message message(buffer);
                 box.addMessage(message);
                 if (del)
                 {
@@ -85,17 +82,16 @@ void importBoxes(bool del)
             dir = STDirectory("/3ds/CECTool/" + boxId + "/OutBox__");
             for (size_t j = 0; dir.good() && j < dir.count() && box.getMessages().size() < box.getInfo().maxMessages(); j++)
             {
-                in = fopen(("/3ds/CECTool/" + boxId + "/OutBox__/" + dir.item(j)).c_str(), "r");
+                FILE* in = fopen(("/3ds/CECTool/" + boxId + "/OutBox__/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
                 size_t messageSize = ftell(in);
                 fseek(in, 0, SEEK_SET);
-                data = new u8[messageSize];
-                fread(data, 1, messageSize, in);
+                std::vector<u8> buffer(messageSize);
+                fread(buffer.data(), 1, messageSize, in);
                 fclose(in);
 
-                Message message(data);
+                Message message(buffer);
                 message.getInfo().updateTimes();
-                delete[] data;
                 box.addMessage(message);
                 if (del)
                 {

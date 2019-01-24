@@ -16,13 +16,7 @@ namespace Streetpass {
 
 class Box
 {
-private:
-    u32 id;
-    bool outBox;
-    BoxInfo info;
-    //OBIndex* index = nullptr;
-    //std::unique_ptr<BoxInfo> info;
-    std::unique_ptr<OBIndex> index;
+
 public:
     Box(u32 id, bool outBox = false);
     ~Box() = default;
@@ -35,6 +29,12 @@ public:
     Result clearMessages();
     Result removeMessage(cecMessageId);
     Result saveInfo() const;
+private:
+    u32 id;
+    bool outBox;
+    BoxInfo info;
+    //std::unique_ptr<BoxInfo> info;
+    std::unique_ptr<OBIndex> index;
 };
 
 } // namespace Streetpass

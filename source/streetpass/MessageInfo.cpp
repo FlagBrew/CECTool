@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "streetpass/MessageInfo.hpp"
 
 extern "C" {
@@ -6,32 +8,64 @@ extern "C" {
 
 namespace Streetpass {
 
-cecMessageId MessageInfo::messageID() const
-{
-    cecMessageId id;
-    std::copy(info.messageID, info.messageID + 8, id.data);
+MessageInfo::MessageInfo(const std::vector<u8>& buffer) : messageHeader(){
+    std::memcpy(&messageHeader, buffer.data(), sizeof(CecMessageHeader));
+}
+
+std::vector<u8> MessageInfo::data() const {
+    std::vector<u8> ret(sizeof(CecMessageHeader));
+    std::memcpy(ret.data(), &messageHeader, sizeof(CecMessageHeader));
+    return ret;
+}
+
+CecMessageId MessageInfo::messageID() const {
+    CecMessageId id;
+    std::memcpy(id.data, messageHeader.messageID.data(), messageHeader.messageID.size());
     return id;
 }
 
-static Timestamp currentStamp()
-{
-    time_t current = time(nullptr);
-    tm* currentTime = gmtime(&current);
-    Timestamp ret;
-    ret.year = currentTime->tm_year + 1900;
-    ret.month = currentTime->tm_mon + 1;
-    ret.day = currentTime->tm_mday;
-    ret.weekDay = currentTime->tm_wday;
-    ret.hour = currentTime->tm_hour;
-    ret.minute = currentTime->tm_min;
-    ret.second = currentTime->tm_sec;
-    ret.millisecond = osGetTime() % 1000;
-    return ret;
+u32 MessageInfo::messageSize() const {
+    return messageHeader.messageSize;
+}
+
+Timestamp MessageInfo::createdTime() const {
+    return messageHeader.created;
+}
+
+Timestamp MessageInfo::receivedTime() const {
+    return messageHeader.received;
+}
+
+Timestamp MessageInfo::sentTime() const {
+    return messageHeader.sent;
+}
+
+void MessageInfo::createdTime(const Timestamp& timestamp) {
+    messageHeader.created = timestamp;
+}
+
+void MessageInfo::receivedTime(const Timestamp& timestamp) {
+    messageHeader.received = timestamp;
+}
+
+void MessageInfo::sentTime(const Timestamp& timestamp) {
+    messageHeader.sent = timestamp;
 }
 
 void MessageInfo::updateTimes()
 {
-    Timestamp current = currentStamp();
+    time_t curTime = time(nullptr);
+    tm* currentTime = gmtime(&curTime);
+    Timestamp current;
+    current.year = currentTime->tm_year + 1900;
+    current.month = currentTime->tm_mon + 1;
+    current.day = currentTime->tm_mday;
+    current.weekDay = currentTime->tm_wday;
+    current.hour = currentTime->tm_hour;
+    current.minute = currentTime->tm_min;
+    current.second = currentTime->tm_sec;
+    current.millisecond = osGetTime() % 1000;
+
     sentTime(current);
     current.second += 10;
     if (current.second >= 60)

@@ -4,7 +4,7 @@
 namespace Streetpass {
 
 OBIndex::OBIndex() : obIndex(), messages() {
-
+    obIndex.magic = 0x6767;
 }
 
 OBIndex::OBIndex(const std::vector<u8>& buffer) : obIndex(), messages() {

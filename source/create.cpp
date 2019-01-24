@@ -25,8 +25,9 @@ CreateBox::CreateBox(const std::string& id) : id(id), boxId(std::stoul(id, nullp
 bool CreateBox::CheckMBoxList() {
     Result res = CECDU_OpenAndRead(sizeof(MBoxListHeader), boxId, CEC_PATH_MBOX_LIST, CEC_READ | CEC_CHECK, &mboxList, nullptr);
     if (R_FAILED(res)) {
+        // shouldn't cause failure, mboxlist will be created by cecd if needed
         //printf("MBoxList OpenAndRead failed\n");
-        return false;
+        //return false;
     } else {
         for (u32 i = 0; i < mboxList.numBoxes; i++)
         {
@@ -172,7 +173,7 @@ bool CreateBox::CreateMessage(const std::string& templateFile) {
     fread(buffer.data(), 1, filesize, in);
     fclose(in);
 
-    std::unique_ptr<Message> message = std::make_unique<Message>(buffer.data());
+    std::unique_ptr<Message> message = std::make_unique<Message>(buffer);
     Result res = box->addMessage(*message);
     if(R_FAILED(res)) {
         printf("box->addMessage failed\n");
@@ -185,10 +186,12 @@ bool CreateBox::CreateOutboxMessages() {
     box = std::make_unique<Box>(boxId, true);
     STDirectory dir("/3ds/CECTool/" + id + "/OutBox__");
     const std::string outboxDir = "/3ds/CECTool/" + id + "/OutBox__/";
+    
     for (size_t j = 0; j < dir.count() && box->getMessages().size() < box->getInfo().maxMessages(); j++)
     {
         CreateMessage((outboxDir + dir.item(j)));
     }
+
     box->saveInfo();
     return true;
 }
@@ -244,7 +247,7 @@ void createBox(const std::string& id)
     }
 
     std::unique_ptr<CreateBox> create = std::make_unique<CreateBox>(id);
-    create->CheckMBoxList(); // shouldn't cause failure, mboxlist will be created by cecd if needed
+    if (!create->CheckMBoxList()) return;
     if (!create->CheckTemplateFiles()) return;
     if (!create->CheckOutboxMessages()) return;
     if (!create->CreateMBoxData()) return;

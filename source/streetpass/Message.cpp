@@ -2,23 +2,19 @@
 
 namespace Streetpass {
 
-Message::Message(u8* data) : info(data) {
-    for (u32 i = 0; i < info.messageSize(); i++)
-        {
-            messageData.push_back(data[i]);
-        }
+Message::Message(const std::vector<u8>& buffer) : info(buffer), messageData(buffer) {
 }
 
-const MessageInfo& Message::getInfo() const {
-    return info;
+std::vector<u8> Message::data() const {
+    return messageData;
 }
 
 MessageInfo& Message::getInfo() {
     return info;
 }
 
-std::vector<u8> Message::data() const {
-    return messageData;
+const MessageInfo& Message::getInfo() const {
+    return info;
 }
 
 } // namespace Streetpass

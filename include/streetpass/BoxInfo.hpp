@@ -1,52 +1,56 @@
 #pragma once
 
-#include <3ds.h>
+#include <3ds/types.h>
 #include <vector>
 #include "streetpass/Message.hpp"
 
 namespace Streetpass {
 
+struct CecBoxInfoHeader {
+    u16 magic; // 0x6262 'bb'
+    u16 padding;
+    u32 fileSize;
+    u32 maxBoxSize;
+    u32 boxSize;
+    u32 maxMessageNum;
+    u32 messageNum;
+    u32 maxBatchSize;
+    u32 maxMessageSize;
+};
+static_assert(sizeof(CecBoxInfoHeader) == 0x20, "CecBoxInfoHeader struct has incorrect size.");
+
 class BoxInfo
 {
-private:
-    u8 info[0x20];
-    std::vector<MessageInfo> messages;
 public:
-    BoxInfo() {}
-    BoxInfo(u8* data, bool cont = true)
-    {
-        std::copy(data, data + 0x20, info);
-        if (cont)
-        {
-            for (size_t i = 0x20; i < fileSize(); i += 0x70)
-            {
-                messages.push_back({data + i});
-            }
-        }
-    }
+    explicit BoxInfo();
+    explicit BoxInfo(const std::vector<u8>& buffer, bool cont = true);
+    ~BoxInfo() = default;
 
-    u32 fileSize() const { return *(u32*)(info + 0x4); }
-    void fileSize(u32 v) { *(u32*)(info + 0x4) = v; }
-    u32 maxBoxSize() const { return *(u32*)(info + 0x8); }
-    u32 currentBoxSize() const { return *(u32*)(info + 0xC); }
-    void currentBoxSize(u32 v) { *(u32*)(info + 0xC) = v; }
-    u32 maxMessages() const { return *(u32*)(info + 0x10); }
-    u32 currentMessages() const { return *(u32*)(info + 0x14); }
-    void currentMessages(u32 v) { *(u32*)(info + 0x14) = v; }
-    u32 maxBatchSize() const { return *(u32*)(info + 0x18); }
-    u32 maxMessageSize() const { return *(u32*)(info + 0x1C); }
-    bool addMessage(const MessageInfo& message);
-    bool addMessage(const Message& message)
-    {
-        return addMessage(message.getInfo());
-    }
     std::vector<u8> data() const;
-    const std::vector<MessageInfo>& getMessages() const
-    {
-        return messages;
-    }
+
+    u32 currentBoxSize() const;
+    u32 currentMessages() const;
+    u32 fileSize() const;
+    u32 maxBatchSize() const;
+    u32 maxBoxSize() const;
+    u32 maxMessages() const;
+    u32 maxMessageSize() const;
+
+    void currentBoxSize(u32 size);
+    void currentMessages(u32 numMessages);
+    void fileSize(u32 size);
+
+    bool addMessage(const Message& message);
+    bool addMessage(const MessageInfo& messageInfo);
+
     void clearMessages();
-    void deleteMessage(cecMessageId id);
+    void deleteMessage(const CecMessageId& id);
+
+    const std::vector<MessageInfo>& getMessages() const;
+
+private:
+    CecBoxInfoHeader boxInfoHeader;
+    std::vector<MessageInfo> messages;
 };
 
 } // namespace Streetpass

@@ -6,16 +6,18 @@ namespace Streetpass {
 
 class Message
 {
+public:
+    explicit Message(const std::vector<u8>& buffer);
+    ~Message() = default;
+
+    std::vector<u8> data() const;
+
+    MessageInfo& getInfo();
+    const MessageInfo& getInfo() const;
+
 private:
     MessageInfo info;
     std::vector<u8> messageData;
-public:
-    explicit Message(u8* data);
-    ~Message() = default;
-
-    const MessageInfo& getInfo() const;
-    MessageInfo& getInfo();
-    std::vector<u8> data() const;
 };
 
 } // namespace Streetpass

@@ -17,7 +17,7 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
         printf("OpenAndRead info 1 failed: %" PRIX32 "\n", res);
     }
 
-    info = BoxInfo(buffer.data(), false);
+    info = BoxInfo(buffer, false);
     if (info.currentMessages() > 0)
     {
         bufferSize = info.fileSize();
@@ -29,7 +29,7 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
             printf("OpenAndRead info 2 failed: %" PRIX32 "\n", res);
         }
 
-        info = BoxInfo(buffer.data());
+        info = BoxInfo(buffer);
     }
 
     if (outBox)
