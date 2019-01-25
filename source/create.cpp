@@ -1,6 +1,5 @@
 #include <3ds.h>
 #include <fstream>
-#include "import.hpp"
 #include "common/io.hpp"
 #include "common/STDirectory.hpp"
 #include "common/util.hpp"

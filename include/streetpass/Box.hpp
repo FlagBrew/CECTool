@@ -29,12 +29,16 @@ public:
     Result clearMessages();
     Result removeMessage(cecMessageId);
     Result saveInfo() const;
+
+    OBIndex& Index();
+    const OBIndex& Index() const;
+
 private:
     u32 id;
     bool outBox;
     BoxInfo info;
     //std::unique_ptr<BoxInfo> info;
-    std::unique_ptr<OBIndex> index;
+    std::unique_ptr<OBIndex> obIndex;
 };
 
 } // namespace Streetpass

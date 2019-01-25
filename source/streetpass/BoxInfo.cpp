@@ -27,8 +27,8 @@ std::vector<u8> BoxInfo::data() const
     std::vector<u8> ret(fileSize());
     std::memcpy(ret.data(), &boxInfoHeader, sizeof(CecBoxInfoHeader));
     for (u32 index = 0; index < boxInfoHeader.messageNum; index++) {
-        std::memcpy(ret.data() + sizeof(CecBoxInfoHeader), messages[index].data().data(),
-                    sizeof(CecMessageHeader));
+        std::memcpy(ret.data() + sizeof(CecBoxInfoHeader) + index * sizeof(CecMessageHeader),
+                    messages[index].data().data(), sizeof(CecMessageHeader));
     }
 
     return ret;

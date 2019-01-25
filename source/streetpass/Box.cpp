@@ -38,14 +38,14 @@ Box::Box(u32 id, bool outBox) : id(id), outBox(outBox)
         res = CECDU_Open(id, CEC_PATH_OUTBOX_INDEX, CEC_READ, &obIndexSize);
         if (R_FAILED(res)) {
             printf("OBIndex Open failed: %" PRIX32 "\n", res);
-            index = std::make_unique<OBIndex>();
+            obIndex = std::make_unique<OBIndex>();
         } else {
             std::vector<u8> obIndexBuffer(obIndexSize);
             res = CECDU_OpenAndRead(obIndexSize, id, CEC_PATH_OUTBOX_INDEX, CEC_READ, obIndexBuffer.data(), &readSize);
             if (R_FAILED(res)) {
                 printf("OBIndex OpenAndRead failed: %" PRIX32 "\n", res);
             } else {
-                index = std::make_unique<OBIndex>(obIndexBuffer);
+                obIndex = std::make_unique<OBIndex>(obIndexBuffer);
             }
         }
     }
@@ -58,7 +58,7 @@ Result Box::addMessage(const Message& message)
     u32 messageSize = message.getInfo().messageSize();
 
     info.addMessage(message);
-    index->addMessage(message);
+    obIndex->addMessage(message);
 
     Result res = CECDU_WriteMessage(id, outBox, 8, messageSize, message.data().data(), mId.data);
     if (R_FAILED(res)) {
@@ -125,7 +125,7 @@ Result Box::saveInfo() const
         return res;
     }
 
-    if (index && outBox)
+    if (obIndex && outBox)
     {
         res = CECDU_Delete(id, CEC_PATH_OUTBOX_INDEX, true, 0, nullptr);
         if (R_FAILED(res)) {
@@ -133,7 +133,7 @@ Result Box::saveInfo() const
             return res;
         }
 
-        std::vector<u8> obIndexBuffer = index->data();
+        std::vector<u8> obIndexBuffer = obIndex->data();
         res = CECDU_OpenAndWrite(obIndexBuffer.size(), id, CEC_PATH_OUTBOX_INDEX,
                                  CEC_WRITE | CEC_CHECK | CEC_CREATE, obIndexBuffer.data());
         if (R_FAILED(res)) {
@@ -142,6 +142,14 @@ Result Box::saveInfo() const
         }
     }
     return 0;
+}
+
+OBIndex& Box::Index() {
+    return *obIndex;
+}
+
+const OBIndex& Box::Index() const {
+    return *obIndex;
 }
 
 } // namespace Streetpass
