@@ -13,9 +13,18 @@ extern "C"
 }
 
 using Streetpass::Box;
-using Streetpass::MBoxListHeader;
+//using Streetpass::MBoxListHeader;
 using Streetpass::Message;
 
+void importBoxes(bool deleteBox = false) {
+
+}
+
+void importBox(Streetpass::StreetpassManager& sm, u32 boxId) {
+    
+}
+
+/*
 void importBoxes(bool del)
 {
     //Result res; currently unused
@@ -61,7 +70,7 @@ void importBoxes(bool del)
             currentId = std::stoul(list.boxIds[availableBoxes[i]], nullptr, 16);
             dir = STDirectory("/3ds/CECTool/" + boxId + "/InBox___");
             Box box(currentId, false);
-            for (size_t j = 0; j < dir.good() && dir.count() && box.getMessages().size() < box.getInfo().maxMessages(); j++)
+            for (size_t j = 0; j < dir.good() && dir.count() && box.Messages().size() < box.Info().maxMessages(); j++)
             {
                 FILE* in = fopen(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
@@ -80,7 +89,7 @@ void importBoxes(bool del)
             }
 
             dir = STDirectory("/3ds/CECTool/" + boxId + "/OutBox__");
-            for (size_t j = 0; dir.good() && j < dir.count() && box.getMessages().size() < box.getInfo().maxMessages(); j++)
+            for (size_t j = 0; dir.good() && j < dir.count() && box.Messages().size() < box.Info().maxMessages(); j++)
             {
                 FILE* in = fopen(("/3ds/CECTool/" + boxId + "/OutBox__/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
@@ -107,3 +116,4 @@ void importBoxes(bool del)
         }
     }
 }
+*/

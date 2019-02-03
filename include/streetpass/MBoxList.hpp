@@ -1,19 +1,52 @@
 #pragma once
 
 #include <3ds/types.h>
-#include <array>
+#include <string>
+#include <vector>
+
+extern "C" {
+#include "3ds/services/cecdu.h"
+}
 
 namespace Streetpass {
 
-struct MBoxListHeader
-{
-    u16 magic; // 0x6868 'hh'
-    u16 padding;
-    u32 version;
-    u32 numBoxes;
-    //std::array<std::array<u8, 16>, 24> boxIds;
-    char boxIds[24][16]; // 12 used, but space for 24
+class MBoxList {
+public:
+    explicit MBoxList();
+    explicit MBoxList(const std::vector<u8>& buffer);
+    ~MBoxList() = default;
+
+    bool IsSlotUnused(u32 slotNum) const;
+    bool IsSlotUsed(u32 slotNum) const;
+
+    u32 NumberOfSlotsUsed() const;
+    u32 NumberOfSlotsUnused() const;
+    u32 MaxNumberOfSlots() const;
+
+    std::vector<u8> UnusedSlots() const;
+    std::vector<u8> UsedSlots() const;
+
+    //Result AddBoxName(const std::vector<u8>& buffer);
+    //Result RemoveBoxName(const std::vector<u8>& buffer);
+
+    std::vector<u32> BoxIds() const;
+    std::vector<std::string> BoxNames() const;
+
+    std::vector<u8> BoxNamesData() const;
+    u32 NumBoxes() const;
+    u32 Version() const;
+
+    std::vector<u8> data() const;
+
+    CecMBoxListHeader& Header();
+    const CecMBoxListHeader& Header() const;
+private:
+    CecMBoxListHeader mboxListHeader;
+
+    const std::string filename = "MBoxList____";
+
+    static constexpr u32 MaxSlots = 12;
+    static constexpr u32 BoxNameSize = 16;
 };
-static_assert(sizeof(MBoxListHeader) == 0x18C, "MBoxListHeader struct has incorrect size.");
 
 } // namespace Streetpass

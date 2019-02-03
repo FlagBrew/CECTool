@@ -1,43 +1,36 @@
 #pragma once
 
 #include <3ds/types.h>
+#include <string>
 #include <vector>
-#include "streetpass/Message.hpp"
-#include "streetpass/MessageInfo.hpp"
 
-extern "C"
-{
+extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
 namespace Streetpass {
 
-struct OBIndexHeader
-{
-    u16 magic; // 0x6767 'gg'
-    u16 padding;
-    u32 numMessages;
-};
-static_assert(sizeof(OBIndexHeader) == 0x08, "OBIndexHeader struct as incorrect size.");
-
-class OBIndex
-{
+class OBIndex {
 public:
     explicit OBIndex();
     explicit OBIndex(const std::vector<u8>& buffer);
-    ~OBIndex() = default;
+    ~OBIndex();
 
-    bool addMessage(const Message& message);
-    bool addMessage(const MessageInfo& messageInfo);
+    bool AddMessageId(const CecMessageId& messageId);
+    bool DeleteMessageId(const CecMessageId& messageId);
+    bool DeleteAllMessageIds();
 
     std::vector<u8> data() const;
+    std::vector<CecMessageId> MessageIds() const;
 
     u32 FileSize() const;
-    u32 NumMessages() const;
+    u32 NumberOfMessages() const;
 
 private:
-    OBIndexHeader obIndex;
-    std::vector<cecMessageId> messages;
+    CecOBIndexHeader obIndexHeader;
+    std::vector<CecMessageId> messageIds;
+
+    const std::string filename = "OBIndex_____";
 };
 
 } // namespace Streetpass

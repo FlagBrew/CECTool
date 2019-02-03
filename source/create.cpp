@@ -8,15 +8,23 @@
 #include "streetpass/MBoxList.hpp"
 #include "create.hpp"
 
-extern "C"
-{
+extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
 using Streetpass::Box;
-using Streetpass::MBoxListHeader;
+//using Streetpass::MBoxListHeader;
 using Streetpass::Message;
 
+void createBox(const std::string& id) {
+    
+}
+
+void createBox(Streetpass::StreetpassManager& sm) {
+    
+}
+
+/*
 CreateBox::CreateBox(const std::string& id) : id(id), boxId(std::stoul(id, nullptr, 16)), mboxList() {
 
 }
@@ -186,7 +194,7 @@ bool CreateBox::CreateOutboxMessages() {
     STDirectory dir("/3ds/CECTool/" + id + "/OutBox__");
     const std::string outboxDir = "/3ds/CECTool/" + id + "/OutBox__/";
     
-    for (size_t j = 0; j < dir.count() && box->getMessages().size() < box->getInfo().maxMessages(); j++)
+    for (size_t j = 0; j < dir.count() && box->Messages().size() < box->Info().maxMessages(); j++)
     {
         CreateMessage((outboxDir + dir.item(j)));
     }
@@ -256,3 +264,4 @@ void createBox(const std::string& id)
     if (!create->UpdateMBoxList()) return;
 }
 
+*/

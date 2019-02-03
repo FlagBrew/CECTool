@@ -1,44 +1,28 @@
 #pragma once
 
-#include <stdio.h>
-#include <string>
-#include <memory>
-#include <vector>
 #include "streetpass/BoxInfo.hpp"
-#include "streetpass/OBIndex.hpp"
+#include "streetpass/Message.hpp"
 
-extern "C"
-{
+extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
 namespace Streetpass {
 
-class Box
-{
-
+class Box {
 public:
-    Box(u32 id, bool outBox = false);
-    ~Box() = default;
-    std::vector<MessageInfo> getMessages() const { return info.getMessages(); }
+    virtual ~Box() {};
 
-    const BoxInfo& getInfo() const { return info; }
-    BoxInfo& getInfo() { return info; }
+    virtual Result AddMessage(const Message& message) = 0;
+    virtual Result DeleteMessage(const CecMessageId& messageId) = 0;
+    virtual Result DeleteAllMessages() = 0;
 
-    Result addMessage(const Message& message);
-    Result clearMessages();
-    Result removeMessage(cecMessageId);
-    Result saveInfo() const;
+    virtual BoxInfo& Info() = 0;
+    virtual const BoxInfo& Info() const = 0;
 
-    OBIndex& Index();
-    const OBIndex& Index() const;
-
+    virtual std::vector<Message> Messages() = 0;
+    virtual const std::vector<Message> Messages() const = 0;
 private:
-    u32 id;
-    bool outBox;
-    BoxInfo info;
-    //std::unique_ptr<BoxInfo> info;
-    std::unique_ptr<OBIndex> obIndex;
 };
 
 } // namespace Streetpass

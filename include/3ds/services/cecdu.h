@@ -4,24 +4,25 @@
 #include <3ds/result.h>
 #include <3ds/services/fs.h>
 
-typedef enum CecDataPathType {
+typedef enum {
     CEC_PATH_MBOX_LIST = 1,
-    CEC_PATH_MBOX_INFO,
-    CEC_PATH_INBOX_INFO,
-    CEC_PATH_OUTBOX_INFO,
-    CEC_PATH_OUTBOX_INDEX,
-    CEC_PATH_INBOX_MSG,
-    CEC_PATH_OUTBOX_MSG,
+    CEC_PATH_MBOX_INFO = 2,
+    CEC_PATH_INBOX_INFO = 3,
+    CEC_PATH_OUTBOX_INFO = 4,
+    CEC_PATH_OUTBOX_INDEX = 5,
+    CEC_PATH_INBOX_MSG = 6,
+    CEC_PATH_OUTBOX_MSG = 7,
     CEC_PATH_ROOT_DIR = 10,
-    CEC_PATH_MBOX_DIR,
-    CEC_PATH_INBOX_DIR,
-    CEC_PATH_OUTBOX_DIR,
-    CECMESSAGE_BOX_ICON = 101,
-    CECMESSAGE_BOX_TITLE = 110
-} cecDataPath;
+    CEC_PATH_MBOX_DIR = 11,
+    CEC_PATH_INBOX_DIR = 12,
+    CEC_PATH_OUTBOX_DIR = 13,
+    CEC_MBOX_DATA = 100,
+    CEC_MBOX_ICON = 101,
+    CEC_MBOX_TITLE = 110,
+    CEC_MBOX_PROGRAM_ID = 150
+} CecDataPathType;
 
-typedef enum CecCommand
-{
+typedef enum {
     CEC_COMMAND_NONE,
     CEC_COMMAND_START,
     CEC_COMMAND_RESET_START,
@@ -44,20 +45,89 @@ typedef enum CecCommand
     CEC_COMMAND_OVER_BOSS_FORCE,
     CEC_COMMAND_OVER_BOSS_FORCE_WAIT,
     CEC_COMMAND_END
-} cecCommand;
+} CecCommand;
 
-enum CecOpenFlag
-{
+typedef enum {
     CEC_READ = BIT(1),
     CEC_WRITE = BIT(2),
     CEC_CREATE = BIT(3),
     CEC_CHECK = BIT(4)
-};
+} CecOpenFlag;
 
-typedef struct CecMessageId
-{
+typedef struct {
     u8 data[8];
-} cecMessageId;
+} CecMessageId;
+
+typedef struct {
+    u16 magic; // 0x6262 'bb'
+    u16 padding;
+    u32 fileSize;
+    u32 maxBoxSize;
+    u32 boxSize;
+    u32 maxNumMessages;
+    u32 numMessages;
+    u32 maxBatchSize;
+    u32 maxMessageSize;
+} CecBoxInfoHeader;
+//static_assert(sizeof(CecBoxInfoHeader) == 0x20, "CecBoxInfoHeader struct has incorrect size.");
+
+typedef struct
+{
+    u16 magic; // 0x6868 'hh'
+    u16 padding;
+    u32 version;
+    u32 numBoxes;
+    u8 boxNames[24][16]; // 12 used, but space for 24
+} CecMBoxListHeader;
+//static_assert(sizeof(CecMBoxListHeader) == 0x18C, "CecMBoxListHeader struct has incorrect size.");
+
+
+typedef struct {
+    u16 magic; // 0x6767 'gg'
+    u16 padding;
+    u32 numMessages;
+} CecOBIndexHeader;
+//static_assert(sizeof(CecOBIndexHeader) == 0x08, "OBIndexHeader struct as incorrect size.");
+
+typedef struct {
+    u32 year;
+    u8 month;
+    u8 day;
+    u8 weekDay;
+    u8 hour;
+    u8 minute;
+    u8 second;
+    u16 millisecond;
+} CecTimestamp;
+//static_assert(sizeof(CecTimestamp) == 0x0C, "Timestamp struct as incorrect size.");
+
+typedef struct {
+    u16 magic; // 0x6060 ``
+    u16 padding;
+    u32 messageSize;
+    u32 totalHeaderSize;
+    u32 bodySize;
+    u32 titleId;
+    u32 titleId2;
+    u32 batchId;
+    u32 unknown_1;
+    u8 messageId[8];
+    u32 messageVersion;
+    u8 messageId2[8];
+    u8 flags;
+    u8 sendMethod;
+    u8 unopened;
+    u8 newFlag;
+    u64 senderId;
+    u64 senderId2;
+    CecTimestamp sent;
+    CecTimestamp received;
+    CecTimestamp created;
+    u8 sendCount;
+    u8 forwardCount;
+    u16 userData;
+} CecMessageHeader;
+//static_assert(sizeof(CecMessageHeader) == 0x70, "CecMessageHeader struct as incorrect size.");
 
 Result cecduInit();
 void cecduExit();
@@ -75,7 +145,7 @@ void cecduExit();
  *      1 : Result of function, 0 on success, otherwise error code
  *      2 : File size
  **/
-Result CECDU_Open(u32 programID, cecDataPath path, u32 flag, u32* size);
+Result CECDU_Open(u32 programID, CecDataPathType path, u32 flag, u32* size);
 
 /**
  * CECD::Read service function
@@ -112,7 +182,7 @@ Result CECDU_Read(u32 bufferSize, void* buffer, u32* readSize);
  *      5 : Descriptor for mapping a write-only buffer in the target process
  *      6 : Buffer address
  **/
-Result CECDU_ReadMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize, void* messageID, void* buffer, u32* readSize);
+Result CECDU_ReadMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize, const void* messageID, void* buffer, u32* readSize);
 
 /**
  * CECD::ReadMessageWithHMAC service function
@@ -138,7 +208,7 @@ Result CECDU_ReadMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize,
  *      7 : Descriptor for mapping a write-only buffer in the target process
  *      8 : Buffer address
  **/
-Result CECDU_ReadMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bufferSize, void* messageID, void* hmacKey, void* buffer, u32* readSize);
+Result CECDU_ReadMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bufferSize, const void* messageID, const void* hmacKey, void* buffer, u32* readSize);
 
 /**
  * CECD::Write service function
@@ -152,7 +222,7 @@ Result CECDU_ReadMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 buf
  *      2 : Descriptor for mapping a read-only buffer in the target process
  *      3 : Buffer address
  **/
-Result CECDU_Write(u32 bufferSize, void* buffer);
+Result CECDU_Write(u32 bufferSize, const void* buffer);
 
 /**
  * CECD::WriteMessage service function
@@ -173,7 +243,7 @@ Result CECDU_Write(u32 bufferSize, void* buffer);
  *      4 : Descriptor for mapping a read/write buffer in the target process
  *      5 : Message ID address
  **/
-Result CECDU_WriteMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize, void* buffer, void* messageID);
+Result CECDU_WriteMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize, const void* buffer, const void* messageID);
 
 /**
  * CECD::WriteMessageWithHMAC service function
@@ -198,7 +268,7 @@ Result CECDU_WriteMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize
  *      6 : Descriptor for mapping a read/write buffer in the target process
  *      7 : Message ID address
  **/
-Result CECDU_WriteMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bufferSize, void* buffer, void* hmac, void* messageID);
+Result CECDU_WriteMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bufferSize, const void* buffer, const void* hmac, const void* messageID);
 
 /**
  * CECD::Delete service function
@@ -215,7 +285,7 @@ Result CECDU_WriteMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bu
  *      2 : Descriptor for mapping a read-only buffer in the target process
  *      3 : Message ID address
  **/
-Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, u32 idSize, void* messageID);
+Result CECDU_Delete(u32 programID, CecDataPathType path, bool outBox, u32 idSize, const void* messageID);
 
 /**
  * CECD::SetData service function
@@ -231,7 +301,7 @@ Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, u32 idSize, vo
  *      2 : Descriptor for mapping a read-only buffer in the target process
  *      3 : Buffer address
  **/
-Result CECDU_SetData(u32 programID, u32 bufferSize, u32 option, void* buffer);
+Result CECDU_SetData(u32 programID, u32 bufferSize, u32 option, const void* buffer);
 
 /**
  * CECD::ReadData service function
@@ -251,7 +321,7 @@ Result CECDU_SetData(u32 programID, u32 bufferSize, u32 option, void* buffer);
  *      4 : Descriptor for mapping a write-only buffer in the target process
  *      5 : Destination buffer address
  **/
-Result CECDU_ReadData(u32 destBufferSize, u32 infoType, u32 paramBufferSize, void* paramBuffer, void* destBuffer);
+Result CECDU_ReadData(u32 destBufferSize, u32 infoType, u32 paramBufferSize, const void* paramBuffer, void* destBuffer);
 
 /**
  * CECD::Start service function
@@ -261,7 +331,7 @@ Result CECDU_ReadData(u32 destBufferSize, u32 infoType, u32 paramBufferSize, voi
  *  Outputs:
  *      1 : Result of function, 0 on success, otherwise error code
  **/
-Result CECDU_Start(cecCommand command);
+Result CECDU_Start(CecCommand command);
 
 /**
  * CECD::Stop service function
@@ -271,7 +341,7 @@ Result CECDU_Start(cecCommand command);
  *  Outputs:
  *      1 : Result of function, 0 on success, otherwise error code
  **/
-Result CECDU_Stop(cecCommand command);
+Result CECDU_Stop(CecCommand command);
 
 /**
  * CECD::GetCecInfoBuffer service function
@@ -334,7 +404,7 @@ Result CECDU_GetChangeStateEventHandle(Handle* event);
  *      2 : Descriptor for mapping a read-only buffer in the target process
  *      3 : Buffer address
  **/
-Result CECDU_OpenAndWrite(u32 bufferSize, u32 programID, cecDataPath path, u32 flag, void* buffer);
+Result CECDU_OpenAndWrite(u32 bufferSize, u32 programID, CecDataPathType path, u32 flag, const void* buffer);
 
 /**
  * CECD::OpenAndRead service function
@@ -354,7 +424,7 @@ Result CECDU_OpenAndWrite(u32 bufferSize, u32 programID, cecDataPath path, u32 f
  *      3 : Descriptor for mapping a write-only buffer in the target process
  *      4 : Buffer address
  **/
-Result CECDU_OpenAndRead(u32 bufferSize, u32 programID, cecDataPath path, u32 flag, void* buffer, u32* readSize);
+Result CECDU_OpenAndRead(u32 bufferSize, u32 programID, CecDataPathType path, u32 flag, void* buffer, u32* readSize);
 
 /**
  * CECD::GetEventLog service function

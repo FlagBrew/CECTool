@@ -22,7 +22,7 @@ void cecduExit()
 	svcCloseHandle(cecduHandle);
 }
 
-Result CECDU_Open(u32 programID, cecDataPath path, u32 flag, u32* size)
+Result CECDU_Open(u32 programID, CecDataPathType path, u32 flag, u32* size)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -62,7 +62,7 @@ Result CECDU_Read(u32 bufferSize, void* buffer, u32* readSize)
     return res;
 }
 
-Result CECDU_ReadMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize, void* messageID, void* buffer, u32* readSize)
+Result CECDU_ReadMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize, const void* messageID, void* buffer, u32* readSize)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -86,7 +86,7 @@ Result CECDU_ReadMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize,
     return res;
 }
 
-Result CECDU_ReadMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bufferSize, void* messageID, void* hmacKey, void* buffer, u32* readSize)
+Result CECDU_ReadMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bufferSize, const void* messageID, const void* hmacKey, void* buffer, u32* readSize)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -112,7 +112,7 @@ Result CECDU_ReadMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 buf
     return res;
 }
 
-Result CECDU_Write(u32 bufferSize, void* buffer)
+Result CECDU_Write(u32 bufferSize, const void* buffer)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -126,7 +126,7 @@ Result CECDU_Write(u32 bufferSize, void* buffer)
     return (Result)cmdbuf[1];
 }
 
-Result CECDU_WriteMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize, void* buffer, void* messageID)
+Result CECDU_WriteMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize, const void* buffer, const void* messageID)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -145,7 +145,7 @@ Result CECDU_WriteMessage(u32 programID, bool outBox, u32 idSize, u32 bufferSize
     return (Result)cmdbuf[1];
 }
 
-Result CECDU_WriteMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bufferSize, void* buffer, void* hmacKey, void* messageID)
+Result CECDU_WriteMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bufferSize, const void* buffer, const void* hmacKey, const void* messageID)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -166,7 +166,7 @@ Result CECDU_WriteMessageWithHMAC(u32 programID, bool outBox, u32 idSize, u32 bu
     return (Result)cmdbuf[1];
 }
 
-Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, u32 idSize, void* messageID)
+Result CECDU_Delete(u32 programID, CecDataPathType path, bool outBox, u32 idSize, const void* messageID)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -183,7 +183,7 @@ Result CECDU_Delete(u32 programID, cecDataPath path, bool outBox, u32 idSize, vo
     return (Result)cmdbuf[1];
 }
 
-Result CECDU_SetData(u32 programID, u32 bufferSize, u32 option, void* buffer)
+Result CECDU_SetData(u32 programID, u32 bufferSize, u32 option, const void* buffer)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -199,7 +199,7 @@ Result CECDU_SetData(u32 programID, u32 bufferSize, u32 option, void* buffer)
     return (Result)cmdbuf[1];
 }
 
-Result CECDU_ReadData(u32 destBufferSize, u32 infoType, u32 paramBufferSize, void* paramBuffer, void* destBuffer)
+Result CECDU_ReadData(u32 destBufferSize, u32 infoType, u32 paramBufferSize, const void* paramBuffer, void* destBuffer)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -217,7 +217,7 @@ Result CECDU_ReadData(u32 destBufferSize, u32 infoType, u32 paramBufferSize, voi
     return (Result)cmdbuf[1];
 }
 
-Result CECDU_Start(cecCommand command)
+Result CECDU_Start(CecCommand command)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -229,7 +229,7 @@ Result CECDU_Start(cecCommand command)
     return (Result)cmdbuf[1];
 }
 
-Result CECDU_Stop(cecCommand command)
+Result CECDU_Stop(CecCommand command)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -304,7 +304,7 @@ Result CECDU_GetChangeStateEventHandle(Handle* event)
     return res;
 }
 
-Result CECDU_OpenAndWrite(u32 bufferSize, u32 programID, cecDataPath path, u32 flag, void* buffer)
+Result CECDU_OpenAndWrite(u32 bufferSize, u32 programID, CecDataPathType path, u32 flag, const void* buffer)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();
@@ -323,7 +323,7 @@ Result CECDU_OpenAndWrite(u32 bufferSize, u32 programID, cecDataPath path, u32 f
     return (Result)cmdbuf[1];
 }
 
-Result CECDU_OpenAndRead(u32 bufferSize, u32 programID, cecDataPath path, u32 flag, void* buffer, u32* readSize)
+Result CECDU_OpenAndRead(u32 bufferSize, u32 programID, CecDataPathType path, u32 flag, void* buffer, u32* readSize)
 {
     Result res;
     u32* cmdbuf = getThreadCommandBuffer();

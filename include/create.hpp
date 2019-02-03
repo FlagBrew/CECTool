@@ -7,6 +7,8 @@
 #include "streetpass/Box.hpp"
 #include "streetpass/MBoxList.hpp"
 
+#include "streetpass/StreetpassManager.hpp"
+
 class CreateBox {
 public:
     explicit CreateBox(const std::string& id);
@@ -31,8 +33,10 @@ private:
     std::string id;
     u32 boxId;
 
-    Streetpass::MBoxListHeader mboxList;
+    //Streetpass::CecMBoxListHeader mboxList;
     std::unique_ptr<Streetpass::Box> box;
 };
 
 void createBox(const std::string& id);
+
+void createBox(Streetpass::StreetpassManager& sm);

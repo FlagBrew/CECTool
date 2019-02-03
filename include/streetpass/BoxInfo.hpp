@@ -1,56 +1,42 @@
 #pragma once
 
-#include <3ds/types.h>
 #include <vector>
-#include "streetpass/Message.hpp"
+
+extern "C" {
+#include "3ds/services/cecdu.h"
+}
 
 namespace Streetpass {
 
-struct CecBoxInfoHeader {
-    u16 magic; // 0x6262 'bb'
-    u16 padding;
-    u32 fileSize;
-    u32 maxBoxSize;
-    u32 boxSize;
-    u32 maxMessageNum;
-    u32 messageNum;
-    u32 maxBatchSize;
-    u32 maxMessageSize;
-};
-static_assert(sizeof(CecBoxInfoHeader) == 0x20, "CecBoxInfoHeader struct has incorrect size.");
-
-class BoxInfo
-{
+class BoxInfo {
 public:
     explicit BoxInfo();
-    explicit BoxInfo(const std::vector<u8>& buffer, bool cont = true);
-    ~BoxInfo() = default;
+    explicit BoxInfo(const std::vector<u8>& buffer);
+    ~BoxInfo();
+
+    bool AddMessageHeader(const CecMessageHeader& messageHeader);
+    bool DeleteMessageHeader(const CecMessageId& messageId);
+    bool DeleteAllMessageHeaders();
+
+    u32 BoxSize() const;
+    u32 FileSize() const;
+    u32 MaxBatchSize() const;
+    u32 MaxBoxSize() const;
+    u32 MaxMessages() const;
+    u32 MaxMessageSize() const;
+    u32 NumberOfMessages() const;
 
     std::vector<u8> data() const;
 
-    u32 currentBoxSize() const;
-    u32 currentMessages() const;
-    u32 fileSize() const;
-    u32 maxBatchSize() const;
-    u32 maxBoxSize() const;
-    u32 maxMessages() const;
-    u32 maxMessageSize() const;
+    CecBoxInfoHeader& Header();
+    const CecBoxInfoHeader& Header() const;
 
-    void currentBoxSize(u32 size);
-    void currentMessages(u32 numMessages);
-    void fileSize(u32 size);
-
-    bool addMessage(const Message& message);
-    bool addMessage(const MessageInfo& messageInfo);
-
-    void clearMessages();
-    void deleteMessage(const CecMessageId& id);
-
-    const std::vector<MessageInfo>& getMessages() const;
+    std::vector<CecMessageHeader> MessageHeaders();
+    const std::vector<CecMessageHeader> MessageHeaders() const;
 
 private:
     CecBoxInfoHeader boxInfoHeader;
-    std::vector<MessageInfo> messages;
+    std::vector<CecMessageHeader> messageHeaders;
 };
 
 } // namespace Streetpass
