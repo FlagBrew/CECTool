@@ -14,13 +14,9 @@ OBIndex::OBIndex(const std::vector<u8>& buffer) : obIndexHeader(), messageIds() 
         messageIds.resize(numMessages);
         std::memcpy(messageIds.data(), buffer.data() + sizeof(CecOBIndexHeader), numMessages * sizeof(CecMessageId));
     }
-    printf("OBIndex Constructor\n");
-    printf("numMessages: %lx\n", numMessages);
 }
 
-OBIndex::~OBIndex() {
-    printf("OBIndex destructor\n");
-}
+OBIndex::~OBIndex() {}
 
 bool OBIndex::AddMessageId(const CecMessageId& messageId) {
     for (auto it = messageIds.cbegin(); it != messageIds.cend(); ++it) {

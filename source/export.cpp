@@ -1,5 +1,4 @@
 #include <3ds.h>
-#include <inttypes.h>
 #include <fstream>
 #include <sys/stat.h>
 #include "common/base64.hpp"
@@ -12,7 +11,9 @@ extern "C" {
 }
 
 void exportAllBoxes(Streetpass::StreetpassManager& sm) {
-    sm.ListBoxes();
+    for (u8 slotNum = 0; slotNum < sm.BoxList().MaxNumberOfSlots(); slotNum++) {
+        exportBox(sm, slotNum);
+    }
 }
 
 void exportBox(Streetpass::StreetpassManager& sm, u8 slotNum) {
@@ -20,7 +21,6 @@ void exportBox(Streetpass::StreetpassManager& sm, u8 slotNum) {
     std::unique_ptr<Streetpass::MBox> mbox = sm.OpenBox(slotNum);
     if (mbox) {
         printf("%lx : %lx\n", mbox->ProgramId(), mbox->PrivateId());
-        sm.HexDump(mbox->data());
 
         const std::string mboxExportPath = "/3ds/CECTool/export/" + boxName + "/";
         const std::string mboxExportInboxPath = mboxExportPath + "InBox___/";

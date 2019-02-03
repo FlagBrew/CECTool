@@ -2,5 +2,5 @@
 
 #include "streetpass/StreetpassManager.hpp"
 
-void deleteBox(Streetpass::StreetpassManager& sm, u32 boxId);
+void deleteBox(Streetpass::StreetpassManager& sm, u8 slotNum);
 void deleteAllBoxes(Streetpass::StreetpassManager& sm);

@@ -28,6 +28,8 @@ public:
 
     //Result AddBoxName(const std::vector<u8>& buffer);
     //Result RemoveBoxName(const std::vector<u8>& buffer);
+    Result DeleteBox(u8 slotNum);
+    Result DeleteAllBoxes();
 
     std::vector<u32> BoxIds() const;
     std::vector<std::string> BoxNames() const;

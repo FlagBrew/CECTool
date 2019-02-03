@@ -19,8 +19,13 @@ public:
 
     std::unique_ptr<MBox> OpenBox(u8 slotNum) const;
 
+    Result DeleteBox(u8 slotNum);
+    Result DeleteAllBoxes();
+
     MBoxList& BoxList();
     const MBoxList& BoxList() const;
+
+    Result ReloadBoxList();
 
 private:
     std::unique_ptr<MBoxList> mboxList;

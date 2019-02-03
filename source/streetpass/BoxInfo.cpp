@@ -21,12 +21,9 @@ BoxInfo::BoxInfo(const std::vector<u8>& buffer) : boxInfoHeader(), messageHeader
         std::memcpy(messageHeaders.data(), buffer.data() + sizeof(CecBoxInfoHeader), numMessages *
                     sizeof(CecMessageHeader));
     }
-    printf("boxInfo constructor\n");
 }
 
-BoxInfo::~BoxInfo() {
-    printf("boxInfo destructor\n");
-}
+BoxInfo::~BoxInfo() {}
 
 bool BoxInfo::AddMessageHeader(const CecMessageHeader& messageHeader) {
     if(messageHeader.messageSize + boxInfoHeader.boxSize + sizeof(CecMessageHeader) > boxInfoHeader.maxBoxSize) {

@@ -1,12 +1,9 @@
-#include <cinttypes>
-
 #include "streetpass/CecOutbox.hpp"
 
 namespace Streetpass {
 
 CecOutbox::CecOutbox(u32 id, std::unique_ptr<BoxInfo> outboxInfo, std::unique_ptr<OBIndex> outboxIndex)
     : boxId(id), boxInfo(std::move(outboxInfo)), obIndex(std::move(outboxIndex)), messages() {
-    printf("CecOutbox constructor\n");
     if (boxInfo->NumberOfMessages() > 0) {
         for (auto messageHeader : boxInfo->MessageHeaders()) {
             const u32 messageSize = messageHeader.messageSize;
@@ -14,7 +11,7 @@ CecOutbox::CecOutbox(u32 id, std::unique_ptr<BoxInfo> outboxInfo, std::unique_pt
             Result res = CECDU_ReadMessage(boxId, true, sizeof(CecMessageId), messageSize,
                                            messageHeader.messageId, messageBuffer.data(), nullptr);
             if (R_FAILED(res)) {
-                printf("Outbox ReadMessage failed: %" PRIX32 "\n", res);
+                printf("Outbox ReadMessage failed: %lX\n", res);
             } else {
                 messages.emplace_back(messageBuffer);
             }
@@ -28,14 +25,14 @@ CecOutbox::CecOutbox(u32 id) : boxId(id), messages() {
     u32 outboxInfoSize = 0;
     Result res = CECDU_Open(id, CEC_PATH_OUTBOX_INFO, CEC_READ, &outboxInfoSize);
     if (R_FAILED(res)) {
-        printf("Outbox BoxInfo_____ Open failed: %" PRIX32 "\n", res);
+        printf("Outbox BoxInfo_____ Open failed: %lX\n", res);
         boxInfo = std::make_unique<BoxInfo>();
     } else {
         std::vector<u8> outboxInfoBuffer(outboxInfoSize);
         res = CECDU_OpenAndRead(outboxInfoSize, id, CEC_PATH_OUTBOX_INFO, CEC_READ | CEC_CHECK,
                                 outboxInfoBuffer.data(), nullptr);
         if (R_FAILED(res)) {
-            printf("Outbox BoxInfo_____ OpenAndRead failed: %" PRIX32 "\n", res);
+            printf("Outbox BoxInfo_____ OpenAndRead failed: %lX\n", res);
             boxInfo = std::make_unique<BoxInfo>();
         } else {
             boxInfo = std::make_unique<BoxInfo>(outboxInfoBuffer);
@@ -45,14 +42,14 @@ CecOutbox::CecOutbox(u32 id) : boxId(id), messages() {
     u32 obIndexSize = 0;
     res = CECDU_Open(id, CEC_PATH_OUTBOX_INDEX, CEC_READ, &obIndexSize);
     if (R_FAILED(res)) {
-        printf("OBIndex Open failed: %" PRIX32 "\n", res);
+        printf("OBIndex Open failed: %lX\n", res);
         obIndex = std::make_unique<OBIndex>();
     } else {
         std::vector<u8> obIndexBuffer(obIndexSize);
         res = CECDU_OpenAndRead(obIndexSize, id, CEC_PATH_OUTBOX_INDEX, CEC_READ | CEC_CHECK,
                                 obIndexBuffer.data(), nullptr);
         if (R_FAILED(res)) {
-            printf("OBIndex OpenAndRead failed: %" PRIX32 "\n", res);
+            printf("OBIndex OpenAndRead failed: %lX\n", res);
             obIndex = std::make_unique<OBIndex>();
         } else {
             obIndex = std::make_unique<OBIndex>(obIndexBuffer);
@@ -60,9 +57,7 @@ CecOutbox::CecOutbox(u32 id) : boxId(id), messages() {
     }
 }
 
-CecOutbox::~CecOutbox() {
-    printf("CecOutbox destructor\n");
-}
+CecOutbox::~CecOutbox() {}
 
 Result CecOutbox::AddMessage(const Message& message) {
     const auto& messageHeader = message.MessageHeader();
@@ -72,7 +67,7 @@ Result CecOutbox::AddMessage(const Message& message) {
     Result res = CECDU_WriteMessage(boxId, true, sizeof(CecMessageId), messageSize,
                                     message.data().data(), messageId.data);
     if (R_FAILED(res)) {
-        printf("AddMessage WriteMessage failed: %" PRIX32 "\n", res);
+        printf("AddMessage WriteMessage failed: %lX\n", res);
         return res;
     }
 
@@ -85,7 +80,7 @@ Result CecOutbox::DeleteMessage(const CecMessageId& messageId) {
     Result res = CECDU_Delete(boxId, CEC_PATH_OUTBOX_MSG, true, sizeof(CecMessageId),
                               messageId.data);
     if (R_FAILED(res)) {
-        printf("Message Delete failed: %" PRIX32 "\n", res);
+        printf("Message Delete failed: %lX\n", res);
         return res;
     }
 

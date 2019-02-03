@@ -1,12 +1,9 @@
-#include <cinttypes>
-
 #include "streetpass/CecInbox.hpp"
 
 namespace Streetpass {
 
 CecInbox::CecInbox(u32 id, std::unique_ptr<BoxInfo> inboxInfo) : boxId(id),
                    boxInfo(std::move(inboxInfo)), messages() {
-    printf("CecInbox constructor\n");
     if (boxInfo->NumberOfMessages() > 0) {
         for (auto messageHeader : boxInfo->MessageHeaders()) {
             const u32 messageSize = messageHeader.messageSize;
@@ -14,7 +11,7 @@ CecInbox::CecInbox(u32 id, std::unique_ptr<BoxInfo> inboxInfo) : boxId(id),
             Result res = CECDU_ReadMessage(boxId, false, sizeof(CecMessageId), messageSize,
                                            messageHeader.messageId, messageBuffer.data(), nullptr);
             if (R_FAILED(res)) {
-                printf("Inbox ReadMessage failed: %" PRIX32 "\n", res);
+                printf("Inbox ReadMessage failed: %lX\n", res);
             } else {
                 messages.emplace_back(messageBuffer);
             }
@@ -27,14 +24,14 @@ CecInbox::CecInbox(u32 id) : boxId(id), messages() {
     u32 inboxInfoSize = 0;
     Result res = CECDU_Open(id, CEC_PATH_INBOX_INFO, CEC_READ, &inboxInfoSize);
     if (R_FAILED(res)) {
-        printf("Inbox BoxInfo_____ Open failed: %" PRIX32 "\n", res);
+        printf("Inbox BoxInfo_____ Open failed: %lX\n", res);
         boxInfo = std::make_unique<BoxInfo>();
     } else {
         std::vector<u8> inboxInfoBuffer(inboxInfoSize);
         res = CECDU_OpenAndRead(inboxInfoSize, id, CEC_PATH_INBOX_INFO, CEC_READ | CEC_CHECK,
                                 inboxInfoBuffer.data(), nullptr);
         if (R_FAILED(res)) {
-            printf("Inbox BoxInfo_____ OpenAndRead failed: %" PRIX32 "\n", res);
+            printf("Inbox BoxInfo_____ OpenAndRead failed: %lX\n", res);
             boxInfo = std::make_unique<BoxInfo>();
         } else {
             boxInfo = std::make_unique<BoxInfo>(inboxInfoBuffer);
@@ -42,9 +39,7 @@ CecInbox::CecInbox(u32 id) : boxId(id), messages() {
     }
 }
 
-CecInbox::~CecInbox() {
-    printf("CecInbox destructor\n");
-}
+CecInbox::~CecInbox() {}
 
 Result CecInbox::AddMessage(const Message& message) {
     const auto& messageHeader = message.MessageHeader();
@@ -54,7 +49,7 @@ Result CecInbox::AddMessage(const Message& message) {
     Result res = CECDU_WriteMessage(boxId, false, sizeof(CecMessageId), messageSize,
                                     message.data().data(), messageId.data);
     if (R_FAILED(res)) {
-        printf("AddMessage WriteMessage failed: %" PRIX32 "\n", res);
+        printf("AddMessage WriteMessage failed: %lX\n", res);
         return res;
     }
 
@@ -66,7 +61,7 @@ Result CecInbox::DeleteMessage(const CecMessageId& messageId) {
     Result res = CECDU_Delete(boxId, CEC_PATH_INBOX_MSG, false, sizeof(CecMessageId),
                               messageId.data);
     if (R_FAILED(res)) {
-        printf("Message Delete failed: %" PRIX32 "\n", res);
+        printf("Message Delete failed: %lX\n", res);
         return res;
     }
 

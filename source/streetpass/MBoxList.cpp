@@ -83,6 +83,29 @@ u32 MBoxList::NumBoxes() const {
     return mboxListHeader.numBoxes;
 }
 
+Result MBoxList::DeleteBox(u8 slotNum) {
+    std::vector<std::array<u8, 16>> boxList(24);
+    std::memcpy(boxList.data(), mboxListHeader.boxNames, sizeof(mboxListHeader.boxNames));
+    
+    auto it = boxList.begin();
+    std::advance(it, slotNum);
+    boxList.erase(it);
+
+    std::memcpy(mboxListHeader.boxNames, boxList.data(), sizeof(mboxListHeader.boxNames));
+    mboxListHeader.numBoxes -= 1;
+    return 0;
+}
+
+Result MBoxList::DeleteAllBoxes() {
+    CecMBoxListHeader newHeader{};
+    newHeader.magic = 0x6868; // 'hh'
+    newHeader.version = 0x01;
+    
+    mboxListHeader = newHeader;
+
+    return 0;
+}
+
 std::vector<u32> MBoxList::BoxIds() const {
     std::vector<u32> ret{};
     std::vector<char> boxId(8);

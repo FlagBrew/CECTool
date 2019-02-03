@@ -24,12 +24,9 @@ MBox::MBox(std::unique_ptr<CecInbox> inbox, std::unique_ptr<CecOutbox> outbox,
            mboxIcon(std::move(icon)), mboxProgramId(std::move(programId)), mboxTitle(std::move(title)) {
     std::memcpy(&mboxInfoHeader, infoHeaderBuffer.data(), sizeof(CecMBoxInfoHeader));
     boxId = mboxInfoHeader.programId;
-    printf("mbox constructor\n");
 }
 
-MBox::~MBox() {
-    printf("mbox destructor\n");
-}
+MBox::~MBox() {}
 
 Result MBox::Close() {
     return 0; // Success

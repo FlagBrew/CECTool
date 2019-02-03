@@ -1,5 +1,4 @@
 #include <3ds.h>
-#include <inttypes.h>
 #include <memory>
 #include <sys/stat.h>
 
@@ -38,7 +37,7 @@ void init() {
 
     Result res = cecduInit();
     if (R_FAILED(res)) {
-        printf("Cecdu Init Failed: %" PRIX32 "\n", res);
+        printf("Cecdu Init Failed: %lX\n", res);
     }
 }
 
@@ -84,17 +83,17 @@ int main()
             showMenu = true;
         } else if (down & KEY_B) {
             printf("Deleting...\n");
-            //deleteAllBoxes(*sm);
-            u8 slotNum = 2;
-            deleteBox(*sm, slotNum);
+            deleteAllBoxes(*sm);
+            //u8 slotNum = 2;
+            //deleteBox(*sm, slotNum);
             printf("Done!\n");
             waitForInput();
             showMenu = true;
         } else if (down & KEY_X) {
             printf("Exporting...\n");
-            //exportAllBoxes(*sm);
-            u8 slotNum = 0;
-            exportBox(*sm, slotNum);
+            exportAllBoxes(*sm);
+            //u8 slotNum = 0;
+            //exportBox(*sm, slotNum);
 
             printf("Done!\n");
             waitForInput();

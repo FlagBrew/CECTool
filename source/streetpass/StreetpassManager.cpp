@@ -1,5 +1,3 @@
-#include <inttypes.h>
-
 #include "streetpass/StreetpassManager.hpp"
 
 extern "C" {
@@ -9,21 +7,13 @@ extern "C" {
 namespace Streetpass {
 
 StreetpassManager::StreetpassManager() {
-    // open mboxList
-    std::vector<u8> mboxListBuffer(sizeof(CecMBoxListHeader));
-    Result res = CECDU_OpenAndRead(sizeof(CecMBoxListHeader), 0x0, CEC_PATH_MBOX_LIST, CEC_READ,
-                                   mboxListBuffer.data(), nullptr);
+    Result res = ReloadBoxList();
     if (R_FAILED(res)) {
-        printf("MBoxList OpenAndRead Failed: %" PRIX32 "\n", res);
-    } else {
-        mboxList = std::make_unique<MBoxList>(mboxListBuffer);
+        mboxList = std::make_unique<MBoxList>();
     }
-
 }
 
-StreetpassManager::~StreetpassManager() {
-
-}
+StreetpassManager::~StreetpassManager() {}
 
 Result StreetpassManager::HexDump(const std::vector<u8>& buffer) const {
     printf("\n");
@@ -48,6 +38,66 @@ Result StreetpassManager::ListBoxes() const {
     return 0;
 }
 
+Result StreetpassManager::DeleteBox(u8 slotNum) {
+    if (slotNum < 0 || slotNum > 11) {
+        printf("DeleteBox: Slot Number out of range\n");
+        return 1;
+    }
+    std::vector<u32> boxIds = mboxList->BoxIds();
+    u32 id = boxIds[slotNum];
+
+    if (id == 0) {
+        return 1;
+    }
+
+    Result res = CECDU_Delete(id, CEC_PATH_MBOX_DIR, false, 0, nullptr);
+    if (R_FAILED(res)) {
+        printf("DeleteBox Delete MBox Dir Failed: %lX\n", res);
+        return 1;
+    }
+
+    res = mboxList->DeleteBox(slotNum);
+    if (R_FAILED(res)) {
+        printf("MBoxList RemoveBox(slotNum) Failed: %lX\n", res);
+        return 1;
+    }
+
+    res = CECDU_OpenAndWrite(sizeof(CecMBoxListHeader), 0x0, CEC_PATH_MBOX_LIST, CEC_WRITE,
+                             mboxList->data().data());
+    if (R_FAILED(res)) {
+        printf("MBoxList OpenAndWrite Failed: %lX\n", res);
+        return 1;
+    }
+
+    ReloadBoxList();
+
+    return 0;
+}
+
+Result StreetpassManager::DeleteAllBoxes() {
+    for (u32 boxId : mboxList->BoxIds()) {
+        if (boxId != 0) {
+            Result res = CECDU_Delete(boxId, CEC_PATH_MBOX_DIR, false, 0, nullptr);
+            if (R_FAILED(res)) {
+                printf("DeleteAllBoxes Delete MBox Dir Failed: %lX\n", res);
+            }
+        }
+    }
+
+    mboxList->DeleteAllBoxes();
+
+    Result res = CECDU_OpenAndWrite(sizeof(CecMBoxListHeader), 0x0, CEC_PATH_MBOX_LIST, CEC_WRITE,
+                             mboxList->data().data());
+    if (R_FAILED(res)) {
+        printf("MBoxList OpenAndWrite Failed: %lX\n", res);
+        return 1;
+    }
+
+    ReloadBoxList();
+
+    return 0;
+}
+
 std::unique_ptr<MBox> StreetpassManager::OpenBox(u8 slotNum) const {
     if (slotNum < 0 || slotNum > 11) {
         printf("OpenBox: Slot Number out of range\n");
@@ -56,94 +106,98 @@ std::unique_ptr<MBox> StreetpassManager::OpenBox(u8 slotNum) const {
     std::vector<u32> boxIds = mboxList->BoxIds();
     u32 id = boxIds[slotNum];
 
+    if (id == 0) {
+        return nullptr;
+    }
+
     u32 mboxInfoSize = 0;
     Result res = CECDU_Open(id, CEC_PATH_MBOX_INFO, CEC_READ, &mboxInfoSize);
     if (R_FAILED(res)) {
-        printf("MBoxInfo Open Failed: %" PRIX32 "\n", res);
+        printf("MBoxInfo Open Failed: %lX\n", res);
         return nullptr;
     }
     std::vector<u8> mboxInfoHeaderBuffer(mboxInfoSize);
     res = CECDU_Read(mboxInfoSize, mboxInfoHeaderBuffer.data(), nullptr);
     if (R_FAILED(res)) {
-        printf("MBoxInfo Read Failed: %" PRIX32 "\n", res);
+        printf("MBoxInfo Read Failed: %lX\n", res);
         return nullptr;
     }
 
     u32 mboxIconSize = 0;
     res = CECDU_Open(id, CEC_MBOX_ICON, CEC_READ, &mboxIconSize);
     if (R_FAILED(res)) {
-        printf("MBoxIcon Open Failed: %" PRIX32 "\n", res);
+        printf("MBoxIcon Open Failed: %lX\n", res);
         return nullptr;
     }
     std::vector<u8> mboxIconBuffer(mboxIconSize);
     res = CECDU_Read(mboxIconSize, mboxIconBuffer.data(), nullptr);
     if (R_FAILED(res)) {
-        printf("MBoxIcon Read Failed: %" PRIX32 "\n", res);
+        printf("MBoxIcon Read Failed: %lX\n", res);
         return nullptr;
     }
 
     u32 mboxProgramIdSize = 0;
     res = CECDU_Open(id, CEC_MBOX_PROGRAM_ID, CEC_READ, &mboxProgramIdSize);
     if (R_FAILED(res)) {
-        printf("MBoxProgramId Open Failed: %" PRIX32 "\n", res);
+        printf("MBoxProgramId Open Failed: %lX\n", res);
         return nullptr;
     }
     std::vector<u8> mboxProgramIdBuffer(mboxProgramIdSize);
     res = CECDU_Read(mboxProgramIdSize, mboxProgramIdBuffer.data(), nullptr);
     if (R_FAILED(res)) {
-        printf("MBoxProgramId Read Failed: %" PRIX32 "\n", res);
+        printf("MBoxProgramId Read Failed: %lX\n", res);
         return nullptr;
     }
 
     u32 mboxTitleSize = 0;
     res = CECDU_Open(id, CEC_MBOX_TITLE, CEC_READ, &mboxTitleSize);
     if (R_FAILED(res)) {
-        printf("MBoxTitle Open Failed: %" PRIX32 "\n", res);
+        printf("MBoxTitle Open Failed: %lX\n", res);
         return nullptr;
     }
     std::vector<u8> mboxTitleBuffer(mboxTitleSize);
     res = CECDU_Read(mboxTitleSize, mboxTitleBuffer.data(), nullptr);
     if (R_FAILED(res)) {
-        printf("MBoxTitle Read Failed: %" PRIX32 "\n", res);
+        printf("MBoxTitle Read Failed: %lX\n", res);
         return nullptr;
     }
 
     u32 inboxInfoSize = 0;
     res = CECDU_Open(id, CEC_PATH_INBOX_INFO, CEC_READ, &inboxInfoSize);
     if (R_FAILED(res)) {
-        printf("InboxInfo Open Failed: %" PRIX32 "\n", res);
+        printf("InboxInfo Open Failed: %lX\n", res);
         return nullptr;
     }
     std::vector<u8> inboxInfoBuffer(inboxInfoSize);
     res = CECDU_Read(inboxInfoSize, inboxInfoBuffer.data(), nullptr);
     if (R_FAILED(res)) {
-        printf("InboxInfo Read Failed: %" PRIX32 "\n", res);
+        printf("InboxInfo Read Failed: %lX\n", res);
         return nullptr;
     }
 
     u32 outboxInfoSize = 0;
     res = CECDU_Open(id, CEC_PATH_OUTBOX_INFO, CEC_READ, &outboxInfoSize);
     if (R_FAILED(res)) {
-        printf("OutboxInfo Open Failed: %" PRIX32 "\n", res);
+        printf("OutboxInfo Open Failed: %lX\n", res);
         return nullptr;
     }
     std::vector<u8> outboxInfoBuffer(outboxInfoSize);
     res = CECDU_Read(outboxInfoSize, outboxInfoBuffer.data(), nullptr);
     if (R_FAILED(res)) {
-        printf("OutboxInfo Read Failed: %" PRIX32 "\n", res);
+        printf("OutboxInfo Read Failed: %lX\n", res);
         return nullptr;
     }
 
     u32 obIndexSize = 0;
     res = CECDU_Open(id, CEC_PATH_OUTBOX_INDEX, CEC_READ, &obIndexSize);
     if (R_FAILED(res)) {
-        printf("OBIndex Open Failed: %" PRIX32 "\n", res);
+        printf("OBIndex Open Failed: %lX\n", res);
         return nullptr;
     }
     std::vector<u8> obIndexBuffer(obIndexSize);
     res = CECDU_Read(obIndexSize, obIndexBuffer.data(), nullptr);
     if (R_FAILED(res)) {
-        printf("OBIndex Read Failed: %" PRIX32 "\n", res);
+        printf("OBIndex Read Failed: %lX\n", res);
         return nullptr;
     }
 
@@ -171,5 +225,17 @@ const MBoxList& StreetpassManager::BoxList() const {
     return *mboxList;
 }
 
+Result StreetpassManager::ReloadBoxList() {
+    std::vector<u8> mboxListBuffer(sizeof(CecMBoxListHeader));
+    Result res = CECDU_OpenAndRead(sizeof(CecMBoxListHeader), 0x0, CEC_PATH_MBOX_LIST, CEC_READ,
+                                   mboxListBuffer.data(), nullptr);
+    if (R_FAILED(res)) {
+        printf("MBoxList OpenAndRead Failed: %lX\n", res);
+        return 1;
+    } else {
+        mboxList = std::make_unique<MBoxList>(mboxListBuffer);
+    }
+    return 0;
+}
 
 } // namespace Streetpass
