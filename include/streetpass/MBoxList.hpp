@@ -26,8 +26,6 @@ public:
     std::vector<u8> UnusedSlots() const;
     std::vector<u8> UsedSlots() const;
 
-    //Result AddBoxName(const std::vector<u8>& buffer);
-    //Result RemoveBoxName(const std::vector<u8>& buffer);
     Result DeleteBox(u8 slotNum);
     Result DeleteAllBoxes();
 

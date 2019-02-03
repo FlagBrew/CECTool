@@ -2,4 +2,4 @@
 
 #include "streetpass/StreetpassManager.hpp"
 
-void openBox(Streetpass::StreetpassManager& sm, u32 boxId);
+void openBox(Streetpass::StreetpassManager& sm, u8 slotNum);

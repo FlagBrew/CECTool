@@ -82,11 +82,11 @@ int main()
             waitForInput();
             showMenu = true;
         } else if (down & KEY_B) {
-            printf("Deleting...\n");
+            //printf("Deleting...\n");
             deleteAllBoxes(*sm);
             //u8 slotNum = 2;
             //deleteBox(*sm, slotNum);
-            printf("Done!\n");
+            //printf("Done!\n");
             waitForInput();
             showMenu = true;
         } else if (down & KEY_X) {
@@ -94,20 +94,19 @@ int main()
             exportAllBoxes(*sm);
             //u8 slotNum = 0;
             //exportBox(*sm, slotNum);
-
             printf("Done!\n");
             waitForInput();
             showMenu = true;
         } else if (down & KEY_Y) {
             printf("Importing...\n");
-            u8 slotNum = 2;
-            importBox(*sm, slotNum);
+            //u8 slotNum = 2;
+            //importBox(*sm, slotNum);
             printf("Done!\n");
             waitForInput();
             showMenu = true;
         } else if (down & KEY_L) {
             printf("Opening...\n");
-            u8 slotNum = 2;
+            u8 slotNum = 0;
             openBox(*sm, slotNum);
             printf("Done!\n");
             waitForInput();
@@ -119,49 +118,6 @@ int main()
             waitForInput();
             showMenu = true;
         }
-        
-        /*
-        if (down & KEY_A)
-        {
-            printf("Exporting...\n");
-            dumpBoxes();
-            printf("Done!\n");
-            waitForInput();
-            showMenu = true;
-        }
-        else if (down & KEY_B)
-        {
-            printf("Importing...\n");
-            importBoxes(false);
-            printf("Done!\n");
-            waitForInput();
-            showMenu = true;
-        }
-        else if (down & KEY_Y)
-        {
-            printf("Creating...\n");
-            createBox("000b8b00");
-            printf("Done!\n");
-            waitForInput();
-            showMenu = true;
-        }
-        // Not right now
-        // else if (down & KEY_X)
-        // {
-        //     printf("Importing...\n");
-        //     importBoxes(true);
-        //     printf("Done!\n");
-        //     waitForInput();
-        //     showMenu = true;
-        // }
-        else if (down & KEY_L) {
-            printf("Running tests...\n");
-            Tests::RunAllTests();
-            printf("Done!\n");
-            waitForInput();
-            showMenu = true;
-        }
-        */
     }
     shutdown();
     return 0;
