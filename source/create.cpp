@@ -1,27 +1,48 @@
 #include <3ds.h>
 #include <fstream>
+
 #include "common/io.hpp"
 #include "common/STDirectory.hpp"
 #include "common/util.hpp"
-#include "streetpass/BoxInfo.hpp"
-
-#include "streetpass/MBoxList.hpp"
 #include "create.hpp"
+#include "streetpass/BoxInfo.hpp"
+#include "streetpass/MBoxList.hpp"
 
 extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
-using Streetpass::Box;
-//using Streetpass::MBoxListHeader;
-using Streetpass::Message;
+void displayCreateMenu(Streetpass::StreetpassManager& sm) {
+    consoleClear();
+    printf("CECTool\n\n");
+    sm.ListBoxes();
+    printf("\n\nCreate Menu\n\n");
+    printf("[A] Create Box from exported backup\n\n");
+    //printf("[B] Create New Box\n"); // Need to figure out common defaults
+    printf("Press START for Main Menu\n\n");
+}
+
+void createMenu(Streetpass::StreetpassManager& sm) {
+    displayCreateMenu(sm);
+    u32 down = hidKeysDown();
+    while (aptMainLoop() && !(down & KEY_START)) {
+        down = hidKeysDown();
+        hidScanInput();
+
+        if(down & KEY_A) {
+            createBox(sm);
+            waitForInput();
+            break;
+        }
+    }
+}
 
 void createBox(const std::string& id) {
     
 }
 
 void createBox(Streetpass::StreetpassManager& sm) {
-    
+    printf("Not yet...\n");
 }
 
 /*

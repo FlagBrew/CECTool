@@ -8,8 +8,8 @@
 #include "export.hpp"
 #include "import.hpp"
 #include "open.hpp"
-#include "tests/tests.hpp"
 #include "streetpass/StreetpassManager.hpp"
+#include "tests/tests.hpp"
 
 extern "C" {
 #include "3ds/services/cecdu.h"
@@ -76,80 +76,24 @@ int main()
         hidScanInput();
 
         if (down & KEY_A) {
-            printf("Creating...\n");
-            //createBox(*sm);
-            printf("Done!\n");
-            waitForInput();
+            createMenu(*sm);
+            down = hidKeysDown();
             showMenu = true;
         } else if (down & KEY_B) {
-            consoleClear();
-            printf("CECTool\n\n");
-            sm->ListBoxes();
-            printf("\n\nDelete Menu\n\n");
-
-            printf("[A] Delete a Box\n");
-            printf("[B] Delete all boxes\n");
-
-            printf("\nPress START for Main Menu\n\n");
-
-            down = hidKeysDown();
-            while (aptMainLoop() && !(down & KEY_START)) {
-                down = hidKeysDown();
-                hidScanInput();
-
-                if (down & KEY_A) {
-                    u8 slotNum = 0;
-                    deleteBox(*sm, slotNum);
-                    break;
-                } else if (down & KEY_B) {
-                    deleteAllBoxes(*sm);
-                    break;
-                }
-            }
-            waitForInput();
+            deleteMenu(*sm);
             down = hidKeysDown();
             showMenu = true;
         } else if (down & KEY_X) {
-            consoleClear();
-            printf("CECTool\n\n");
-            sm->ListBoxes();
-            printf("\n\nExport Menu\n\n");
-
-            printf("[A] Export a Box\n");
-            printf("[B] Export all boxes\n");
-
-            printf("\nPress START for Main Menu\n\n");
-            
-            down = hidKeysDown();
-            while (aptMainLoop() && !(down & KEY_START)) {
-                down = hidKeysDown();
-                hidScanInput();
-
-                if (down & KEY_A) {
-                    u8 slotNum = 0;
-                    exportBox(*sm, slotNum);
-                    break;
-                } else if (down & KEY_B) {
-                    exportAllBoxes(*sm);
-                    break;
-                }
-            }
-            waitForInput();
+            exportMenu(*sm);
             down = hidKeysDown();
             showMenu = true;
         } else if (down & KEY_Y) {
-            printf("Importing...\n");
-            //u8 slotNum = 2;
-            //importBox(*sm, slotNum);
-            printf("Done!\n");
-            waitForInput();
+            importMenu(*sm);
+            down = hidKeysDown();
             showMenu = true;
         } else if (down & KEY_L) {
-            printf("Opening...\n");
-            u8 slotNum = 0;
-            openBox(*sm, slotNum);
-            printf("Done!\n");
-            waitForInput();
+            openMenu(*sm);
+            down = hidKeysDown();
             showMenu = true;
         } else if (down & KEY_R) {
             printf("Testing...\n");

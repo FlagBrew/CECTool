@@ -1,27 +1,55 @@
 #include <3ds.h>
 #include <fstream>
-#include "import.hpp"
-#include "io.hpp"
-#include "STDirectory.hpp"
-#include "streetpass/BoxInfo.hpp"
-#include "streetpass/Box.hpp"
-#include "streetpass/MBoxList.hpp"
 
-extern "C"
-{
+#include "import.hpp"
+#include "common/io.hpp"
+#include "common/STDirectory.hpp"
+#include "common/util.hpp"
+
+extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
-using Streetpass::Box;
-//using Streetpass::MBoxListHeader;
-using Streetpass::Message;
+void displayImportMenu(Streetpass::StreetpassManager& sm) {
+    consoleClear();
+    printf("CECTool\n\n");
+    sm.ListBoxes();
+    printf("\n\nImport Menu\n\n");
+    printf("[A] Import Box\n");
+    printf("[B] Import Messages\n\n");
+    printf("Press START for Main Menu\n\n");
+}
+
+void importMenu(Streetpass::StreetpassManager& sm) {
+    u8 slotNum = 0;
+    u32 down = hidKeysDown();
+    displayImportMenu(sm);
+    while (aptMainLoop() && !(down & KEY_START)) {
+        down = hidKeysDown();
+        hidScanInput();
+
+        if (down & KEY_A) {
+            importBox(sm, slotNum);
+            waitForInput();
+            break;
+        } else if (down & KEY_B) {
+            importMessages(sm, slotNum);
+            waitForInput();
+            break;
+        }
+    }
+}
 
 void importBoxes(bool deleteBox = false) {
 
 }
 
-void importBox(Streetpass::StreetpassManager& sm, u32 boxId) {
-    
+void importBox(Streetpass::StreetpassManager& sm, u8 slotNum) {
+    printf("Not yet...\n");
+}
+
+void importMessages(Streetpass::StreetpassManager& sm, u8 slotNum) {
+    printf("Not yet...\n");
 }
 
 /*
