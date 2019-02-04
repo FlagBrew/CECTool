@@ -14,13 +14,14 @@ void exportAllBoxes(Streetpass::StreetpassManager& sm) {
     for (u8 slotNum = 0; slotNum < sm.BoxList().MaxNumberOfSlots(); slotNum++) {
         exportBox(sm, slotNum);
     }
+    printf("All boxes exported.\n");
 }
 
 void exportBox(Streetpass::StreetpassManager& sm, u8 slotNum) {
     const std::string boxName = sm.BoxList().BoxNames()[slotNum];
     std::unique_ptr<Streetpass::MBox> mbox = sm.OpenBox(slotNum);
     if (mbox) {
-        printf("%lx : %lx\n", mbox->ProgramId(), mbox->PrivateId());
+        //printf("%lx : %lx\n", mbox->ProgramId(), mbox->PrivateId());
 
         const std::string mboxExportPath = "/3ds/CECTool/export/" + boxName + "/";
         const std::string mboxExportInboxPath = mboxExportPath + "InBox___/";
@@ -70,6 +71,8 @@ void exportBox(Streetpass::StreetpassManager& sm, u8 slotNum) {
             file.write(reinterpret_cast<const char*>(message.data().data()), message.MessageSize());
             file.close();
         }
+
+        printf("Box in slot [%x] exported.\n", slotNum);
     }
 }
 

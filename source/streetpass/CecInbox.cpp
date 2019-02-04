@@ -17,7 +17,7 @@ CecInbox::CecInbox(u32 id, std::unique_ptr<BoxInfo> inboxInfo) : boxId(id),
             }
         }
     }
-    printf("    boxInfo->NumberOfMessages: %lx\n", boxInfo->NumberOfMessages());
+    //printf("    boxInfo->NumberOfMessages: %lx\n", boxInfo->NumberOfMessages());
 }
 
 CecInbox::CecInbox(u32 id) : boxId(id), messages() {

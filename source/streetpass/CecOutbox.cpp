@@ -17,8 +17,8 @@ CecOutbox::CecOutbox(u32 id, std::unique_ptr<BoxInfo> outboxInfo, std::unique_pt
             }
         }
     }
-    printf("    boxInfo->NumberOfMessages: %lx\n", boxInfo->NumberOfMessages());
-    printf("    obIndex->NumberOfMessages: %lx\n", obIndex->NumberOfMessages());
+    //printf("    boxInfo->NumberOfMessages: %lx\n", boxInfo->NumberOfMessages());
+    //printf("    obIndex->NumberOfMessages: %lx\n", obIndex->NumberOfMessages());
 }
 
 CecOutbox::CecOutbox(u32 id) : boxId(id), messages() {

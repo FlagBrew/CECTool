@@ -82,20 +82,60 @@ int main()
             waitForInput();
             showMenu = true;
         } else if (down & KEY_B) {
-            //printf("Deleting...\n");
-            deleteAllBoxes(*sm);
-            //u8 slotNum = 2;
-            //deleteBox(*sm, slotNum);
-            //printf("Done!\n");
+            consoleClear();
+            printf("CECTool\n\n");
+            sm->ListBoxes();
+            printf("\n\nDelete Menu\n\n");
+
+            printf("[A] Delete a Box\n");
+            printf("[B] Delete all boxes\n");
+
+            printf("\nPress START for Main Menu\n\n");
+
+            down = hidKeysDown();
+            while (aptMainLoop() && !(down & KEY_START)) {
+                down = hidKeysDown();
+                hidScanInput();
+
+                if (down & KEY_A) {
+                    u8 slotNum = 0;
+                    deleteBox(*sm, slotNum);
+                    break;
+                } else if (down & KEY_B) {
+                    deleteAllBoxes(*sm);
+                    break;
+                }
+            }
             waitForInput();
+            down = hidKeysDown();
             showMenu = true;
         } else if (down & KEY_X) {
-            printf("Exporting...\n");
-            exportAllBoxes(*sm);
-            //u8 slotNum = 0;
-            //exportBox(*sm, slotNum);
-            printf("Done!\n");
+            consoleClear();
+            printf("CECTool\n\n");
+            sm->ListBoxes();
+            printf("\n\nExport Menu\n\n");
+
+            printf("[A] Export a Box\n");
+            printf("[B] Export all boxes\n");
+
+            printf("\nPress START for Main Menu\n\n");
+            
+            down = hidKeysDown();
+            while (aptMainLoop() && !(down & KEY_START)) {
+                down = hidKeysDown();
+                hidScanInput();
+
+                if (down & KEY_A) {
+                    u8 slotNum = 0;
+                    exportBox(*sm, slotNum);
+                    break;
+                } else if (down & KEY_B) {
+                    exportAllBoxes(*sm);
+                    break;
+                }
+            }
             waitForInput();
+            down = hidKeysDown();
             showMenu = true;
         } else if (down & KEY_Y) {
             printf("Importing...\n");
