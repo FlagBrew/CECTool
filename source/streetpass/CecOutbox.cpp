@@ -21,6 +21,12 @@ CecOutbox::CecOutbox(u32 id, std::unique_ptr<BoxInfo> outboxInfo, std::unique_pt
     //printf("    obIndex->NumberOfMessages: %lx\n", obIndex->NumberOfMessages());
 }
 
+CecOutbox::CecOutbox(u32 id, std::unique_ptr<BoxInfo> outboxInfo, std::unique_ptr<OBIndex> outboxIndex,
+    const std::vector<Message>& messages) : boxId(id), boxInfo(std::move(outboxInfo)),
+    obIndex(std::move(outboxIndex)), messages(messages) {
+
+}
+
 CecOutbox::CecOutbox(u32 id) : boxId(id), messages() {
     u32 outboxInfoSize = 0;
     Result res = CECDU_Open(id, CEC_PATH_OUTBOX_INFO, CEC_READ, &outboxInfoSize);

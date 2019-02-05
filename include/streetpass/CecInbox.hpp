@@ -15,7 +15,8 @@ namespace Streetpass {
 
 class CecInbox : public virtual Box {
 public:
-    explicit CecInbox(u32 id, std::unique_ptr<BoxInfo> inboxInfo);
+    CecInbox(u32 id, std::unique_ptr<BoxInfo> inboxInfo);
+    CecInbox(u32 id, std::unique_ptr<BoxInfo> inboxInfo, const std::vector<Message>& messages);
     explicit CecInbox(u32 id);
     ~CecInbox() override;
 

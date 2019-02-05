@@ -20,6 +20,11 @@ CecInbox::CecInbox(u32 id, std::unique_ptr<BoxInfo> inboxInfo) : boxId(id),
     //printf("    boxInfo->NumberOfMessages: %lx\n", boxInfo->NumberOfMessages());
 }
 
+CecInbox::CecInbox(u32 id, std::unique_ptr<BoxInfo> inboxInfo, const std::vector<Message>& messages)
+    : boxId(id), boxInfo(std::move(inboxInfo)), messages(messages) {
+
+}
+
 CecInbox::CecInbox(u32 id) : boxId(id), messages() {
     u32 inboxInfoSize = 0;
     Result res = CECDU_Open(id, CEC_PATH_INBOX_INFO, CEC_READ, &inboxInfoSize);

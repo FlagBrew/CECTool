@@ -19,6 +19,7 @@ public:
 
     std::unique_ptr<MBox> OpenBox(u8 slotNum) const;
 
+    Result CreateBox(u32 boxId, const std::string& boxName, std::unique_ptr<MBox> mbox);
     Result DeleteBox(u8 slotNum);
     Result DeleteAllBoxes();
 

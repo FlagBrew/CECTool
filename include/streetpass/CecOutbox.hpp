@@ -18,6 +18,8 @@ class CecOutbox : public virtual Box {
 public:
     explicit CecOutbox(u32 id);
     CecOutbox(u32 id, std::unique_ptr<BoxInfo> outboxInfo, std::unique_ptr<OBIndex> outboxIndex);
+    CecOutbox(u32 id, std::unique_ptr<BoxInfo> outboxInfo, std::unique_ptr<OBIndex> outboxIndex,
+              const std::vector<Message>& messages);
     ~CecOutbox() override;
 
     Result AddMessage(const Message& message) override;

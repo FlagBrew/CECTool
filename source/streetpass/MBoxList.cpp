@@ -30,7 +30,7 @@ bool MBoxList::IsSlotUsed(u32 slotNum) const {
 }
 
 u32 MBoxList::NumberOfSlotsUsed() const {
-        return mboxListHeader.numBoxes;
+    return mboxListHeader.numBoxes;
 }
 
 u32 MBoxList::NumberOfSlotsUnused() const {
@@ -81,6 +81,12 @@ u32 MBoxList::Version() const {
 
 u32 MBoxList::NumBoxes() const {
     return mboxListHeader.numBoxes;
+}
+
+Result MBoxList::AddBox(const std::string& boxId) {
+    std::memcpy(mboxListHeader.boxNames[mboxListHeader.numBoxes], boxId.c_str(), boxId.size());
+    mboxListHeader.numBoxes += 1;
+    return 0;
 }
 
 Result MBoxList::DeleteBox(u8 slotNum) {
