@@ -1,26 +1,63 @@
 #include <3ds.h>
 #include <fstream>
-#include "import.hpp"
-#include "io.hpp"
-#include "STDirectory.hpp"
-#include "streetpass/BoxInfo.hpp"
-#include "streetpass/Box.hpp"
-#include "streetpass/MBoxList.hpp"
 
-extern "C"
-{
+#include "import.hpp"
+#include "common/io.hpp"
+#include "common/STDirectory.hpp"
+#include "common/util.hpp"
+
+extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
-using Streetpass::Box;
-using Streetpass::boxList;
-using Streetpass::Message;
+void displayImportMenu(Streetpass::StreetpassManager& sm) {
+    consoleClear();
+    printf("CECTool\n\n");
+    sm.ListBoxes();
+    printf("\n\nImport Menu\n\n");
+    printf("[A] Import Box\n");
+    printf("[B] Import Messages\n\n");
+    printf("Press START for Main Menu\n\n");
+}
 
+void importMenu(Streetpass::StreetpassManager& sm) {
+    u8 slotNum = 0;
+    u32 down = hidKeysDown();
+    displayImportMenu(sm);
+    while (aptMainLoop() && !(down & KEY_START)) {
+        down = hidKeysDown();
+        hidScanInput();
+
+        if (down & KEY_A) {
+            importBox(sm, slotNum);
+            waitForInput();
+            break;
+        } else if (down & KEY_B) {
+            importMessages(sm, slotNum);
+            waitForInput();
+            break;
+        }
+    }
+}
+
+void importBoxes(bool deleteBox = false) {
+
+}
+
+void importBox(Streetpass::StreetpassManager& sm, u8 slotNum) {
+    printf("Not yet...\n");
+}
+
+void importMessages(Streetpass::StreetpassManager& sm, u8 slotNum) {
+    printf("Not yet...\n");
+}
+
+/*
 void importBoxes(bool del)
 {
     //Result res; currently unused
-    boxList list;
-    u32 size = sizeof(boxList);
+    MBoxListHeader list;
+    u32 size = sizeof(MBoxListHeader);
     CECDU_Open(0x0, CEC_PATH_MBOX_LIST, CEC_READ | CEC_CHECK, nullptr);
     CECDU_Read(size, &list, nullptr);
     STDirectory dir("/3ds/CECTool");
@@ -41,7 +78,7 @@ void importBoxes(bool del)
     std::vector<int> availableBoxes;
     for (u32 i = 0; i < list.numBoxes; i++)
     {
-        if (std::find(boxes.begin(), boxes.end(), list.boxId[i]) != boxes.end())
+        if (std::find(boxes.begin(), boxes.end(), list.boxIds[i]) != boxes.end())
         {
             availableBoxes.push_back(i);
         }
@@ -57,24 +94,21 @@ void importBoxes(bool del)
         std::string boxId;
         for (size_t i = 0; i < availableBoxes.size(); i++)
         {
-            boxId = list.boxId[availableBoxes[i]];
-            currentId = std::stoul(list.boxId[availableBoxes[i]], nullptr, 16);
+            boxId = list.boxIds[availableBoxes[i]];
+            currentId = std::stoul(list.boxIds[availableBoxes[i]], nullptr, 16);
             dir = STDirectory("/3ds/CECTool/" + boxId + "/InBox___");
-            FILE* in;
-            u8* data;
             Box box(currentId, false);
-            for (size_t j = 0; j < dir.good() && dir.count() && box.getMessages().size() < box.getInfo().maxMessages(); j++)
+            for (size_t j = 0; j < dir.good() && dir.count() && box.Messages().size() < box.Info().maxMessages(); j++)
             {
-                in = fopen(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j)).c_str(), "r");
+                FILE* in = fopen(("/3ds/CECTool/" + boxId + "/InBox___/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
                 size_t messageSize = ftell(in);
                 fseek(in, 0, SEEK_SET);
-                data = new u8[messageSize];
-                fread(data, 1, messageSize, in);
+                std::vector<u8> buffer(messageSize);
+                fread(buffer.data(), 1, messageSize, in);
                 fclose(in);
 
-                Message message(data);
-                delete[] data;
+                Message message(buffer);
                 box.addMessage(message);
                 if (del)
                 {
@@ -83,19 +117,18 @@ void importBoxes(bool del)
             }
 
             dir = STDirectory("/3ds/CECTool/" + boxId + "/OutBox__");
-            for (size_t j = 0; dir.good() && j < dir.count() && box.getMessages().size() < box.getInfo().maxMessages(); j++)
+            for (size_t j = 0; dir.good() && j < dir.count() && box.Messages().size() < box.Info().maxMessages(); j++)
             {
-                in = fopen(("/3ds/CECTool/" + boxId + "/OutBox__/" + dir.item(j)).c_str(), "r");
+                FILE* in = fopen(("/3ds/CECTool/" + boxId + "/OutBox__/" + dir.item(j)).c_str(), "r");
                 fseek(in, 0, SEEK_END);
                 size_t messageSize = ftell(in);
                 fseek(in, 0, SEEK_SET);
-                data = new u8[messageSize];
-                fread(data, 1, messageSize, in);
+                std::vector<u8> buffer(messageSize);
+                fread(buffer.data(), 1, messageSize, in);
                 fclose(in);
 
-                Message message(data);
+                Message message(buffer);
                 message.getInfo().updateTimes();
-                delete[] data;
                 box.addMessage(message);
                 if (del)
                 {
@@ -111,3 +144,4 @@ void importBoxes(bool del)
         }
     }
 }
+*/

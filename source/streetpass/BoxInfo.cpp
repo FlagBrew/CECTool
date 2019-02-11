@@ -1,59 +1,128 @@
+#include <cstdio>
+#include <cstring>
+
 #include "streetpass/BoxInfo.hpp"
 
 extern "C" {
 #include "3ds/services/cecdu.h"
-#include <string.h>
 }
 
 namespace Streetpass {
 
-bool BoxInfo::addMessage(const MessageInfo& message)
-{
-    if (message.messageSize() + currentBoxSize() + 0x70 > maxBoxSize() || currentMessages() + 1 > maxMessages() || std::find(messages.begin(), messages.end(), message) != messages.end())
-    {
+BoxInfo::BoxInfo() : boxInfoHeader(), messageHeaders() {
+    boxInfoHeader.magic = 0x6262; // 'bb'
+}
+
+BoxInfo::BoxInfo(const std::vector<u8>& buffer) : boxInfoHeader(), messageHeaders() {
+    std::memcpy(&boxInfoHeader, buffer.data(), sizeof(CecBoxInfoHeader));
+    const u32 numMessages = boxInfoHeader.numMessages;
+    if (numMessages > 0) {
+        messageHeaders.resize(numMessages);
+        std::memcpy(messageHeaders.data(), buffer.data() + sizeof(CecBoxInfoHeader), numMessages *
+                    sizeof(CecMessageHeader));
+    }
+}
+
+BoxInfo::~BoxInfo() {}
+
+bool BoxInfo::AddMessageHeader(const CecMessageHeader& messageHeader) {
+    if(messageHeader.messageSize + boxInfoHeader.boxSize + sizeof(CecMessageHeader) > boxInfoHeader.maxBoxSize) {
+        printf("AddMessageHeader failed: overflow boxsize\n");
+    }
+
+    if (boxInfoHeader.numMessages + 1 > boxInfoHeader.maxNumMessages) {
+        printf("AddMessageHeader failed: too many messages\n");
         return false;
     }
-    currentBoxSize(currentBoxSize() + message.messageSize() + 0x70);
-    messages.push_back(message);
-    fileSize(fileSize() + 0x70);
-    currentMessages(currentMessages() + 1);
+
+    for (auto it = messageHeaders.cbegin(); it != messageHeaders.cend(); ++it) {
+        if (memcmp(it->messageId, messageHeader.messageId, sizeof(CecMessageId)) == 0) {
+            printf("AddMessageHeader failed: message already exists\n");
+            return false; // Message found; Adding failed.
+        }
+    }
+
+    messageHeaders.emplace_back(messageHeader);
+    boxInfoHeader.boxSize += messageHeader.messageSize + sizeof(CecMessageHeader);
+    boxInfoHeader.fileSize += sizeof(CecMessageHeader);
+    boxInfoHeader.numMessages += 1;
     return true;
+}
+
+bool BoxInfo::DeleteMessageHeader(const CecMessageId& messageId) {
+    for (auto it = messageHeaders.begin(); it != messageHeaders.end(); it++) {
+        if(memcmp(it->messageId, messageId.data, sizeof(CecMessageId))) {
+            boxInfoHeader.boxSize -= it->messageSize + sizeof(CecMessageHeader);
+            boxInfoHeader.fileSize -= sizeof(CecMessageHeader);
+            boxInfoHeader.numMessages -= 1;
+            messageHeaders.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool BoxInfo::DeleteAllMessageHeaders() {
+    for (auto messageHeader : messageHeaders) {
+        boxInfoHeader.boxSize -= messageHeader.messageSize + sizeof(CecMessageHeader);
+        boxInfoHeader.fileSize -= sizeof(CecMessageHeader);
+        boxInfoHeader.numMessages -= 1;
+    }
+    messageHeaders.clear();
+    return true;
+}
+
+u32 BoxInfo::BoxSize() const {
+    return boxInfoHeader.boxSize;
+}
+
+u32 BoxInfo::FileSize() const {
+    return boxInfoHeader.fileSize;
+}
+
+u32 BoxInfo::MaxBatchSize() const {
+    return boxInfoHeader.maxBatchSize;
+}
+
+u32 BoxInfo::MaxBoxSize() const {
+    return boxInfoHeader.maxBoxSize;
+}
+
+u32 BoxInfo::MaxMessages() const {
+    return boxInfoHeader.maxNumMessages;
+}
+
+u32 BoxInfo::MaxMessageSize() const {
+    return boxInfoHeader.maxMessageSize;
+}
+
+u32 BoxInfo::NumberOfMessages() const {
+    return boxInfoHeader.numMessages;
 }
 
 std::vector<u8> BoxInfo::data() const
 {
-    std::vector<u8> ret;
-    ret.insert(ret.end(), info, info + 0x20);
-    for (auto message : messages)
-    {
-        ret.insert(ret.end(), message.data().begin(), message.data().begin() + 0x70);
-    }
-    ret.shrink_to_fit();
-
+    std::vector<u8> ret(boxInfoHeader.fileSize);
+    std::memcpy(ret.data(), &boxInfoHeader, sizeof(CecBoxInfoHeader));
+    std::memcpy(ret.data() + sizeof(CecBoxInfoHeader), messageHeaders.data(),
+                boxInfoHeader.numMessages * sizeof(CecMessageHeader));
     return ret;
 }
 
-void BoxInfo::clearMessages()
-{
-    messages.clear();
-    fileSize(0x20);
-    currentBoxSize(0x20);
-    currentMessages(0);
+CecBoxInfoHeader& BoxInfo::Header() {
+    return boxInfoHeader;
 }
 
-void BoxInfo::deleteMessage(cecMessageId id)
-{
-    for (auto i = messages.begin(); i != messages.end(); i++)
-    {
-        if (!memcmp(i->messageID().data, id.data, 8))
-        {
-            messages.erase(i);
-            fileSize(fileSize() - 0x70);
-            currentBoxSize(currentBoxSize() - (i->messageSize() + 0x70));
-            currentMessages(currentMessages() - 1);
-            return;
-        }
-    }
+const CecBoxInfoHeader& BoxInfo::Header() const {
+    return boxInfoHeader;
+}
+
+std::vector<CecMessageHeader> BoxInfo::MessageHeaders() {
+    return messageHeaders;
+}
+
+const std::vector<CecMessageHeader> BoxInfo::MessageHeaders() const {
+    return messageHeaders;
 }
 
 } // namespace Streetpass

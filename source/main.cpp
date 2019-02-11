@@ -1,85 +1,108 @@
 #include <3ds.h>
-#include <inttypes.h>
+#include <memory>
+#include <sys/stat.h>
+
 #include "common/util.hpp"
 #include "create.hpp"
+#include "delete.hpp"
 #include "export.hpp"
 #include "import.hpp"
+#include "open.hpp"
+#include "streetpass/StreetpassManager.hpp"
 #include "tests/tests.hpp"
 
-extern "C"
-{
+extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
+using Streetpass::StreetpassManager;
+
 int __stacksize__ = 64 * 1024;
 
-int main()
-{
-    Result res;
+void cecToolDirectoryCheck() {
+    // What happens if there is no sd card...?
+    mkdir("/3ds/CECTool", 777);
+    mkdir("/3ds/CECTool/export", 777);
+    mkdir("/3ds/CECTool/import", 777);
+    mkdir("/3ds/CECTool/template", 777);
+    mkdir("/3ds/CECTool/tests", 777);
+}
+
+void init() {
     gfxInitDefault();
     hidInit();
     hidScanInput();
     sdmcInit();
     consoleInit(GFX_TOP, nullptr);
-    if (R_FAILED(res = cecduInit())) printf("Init: %" PRIX32 "\n", res);
+
+    Result res = cecduInit();
+    if (R_FAILED(res)) {
+        printf("Cecdu Init Failed: %lX\n", res);
+    }
+}
+
+void shutdown() {
+    cecduExit();
+}
+
+int main()
+{
+    init();
+    cecToolDirectoryCheck();
+
+    std::unique_ptr<StreetpassManager> sm = std::make_unique<StreetpassManager>();
+
     bool showMenu = true;
     u32 down = hidKeysDown();
     while (aptMainLoop() && !(down & KEY_START))
     {
-        if (showMenu)
-        {
+        if (showMenu) {
             consoleClear();
-            printf("What to do?\n");
-            printf("A: export all boxes\n");
-            printf("B: import all boxes\n");
-            printf("Y: create SSB box\n");
-            // Possible: \nX: import and delete all SD boxes
-            printf("Press START to exit\n");
+            printf("CECTool\n\n");
+            sm->ListBoxes();
+            printf("\n\nMain Menu\n\n");
+
+            printf("[A] Create\n");
+            printf("[B] Delete\n");
+            printf("[X] Export\n");
+            printf("[Y] Import\n");
+            printf("[L] Open\n");
+            printf("[R] Tests\n");
+
+            printf("\nPress START to exit\n");
             showMenu = false;
         }
         down = hidKeysDown();
         hidScanInput();
-        if (down & KEY_A)
-        {
-            printf("Exporting...\n");
-            dumpBoxes();
-            printf("Done!\n");
-            waitForInput();
+
+        if (down & KEY_A) {
+            createMenu(*sm);
+            down = hidKeysDown();
             showMenu = true;
-        }
-        else if (down & KEY_B)
-        {
-            printf("Importing...\n");
-            importBoxes(false);
-            printf("Done!\n");
-            waitForInput();
+        } else if (down & KEY_B) {
+            deleteMenu(*sm);
+            down = hidKeysDown();
             showMenu = true;
-        }
-        else if (down & KEY_Y)
-        {
-            printf("Creating...\n");
-            createBox("000b8b00");
-            printf("Done!\n");
-            waitForInput();
+        } else if (down & KEY_X) {
+            exportMenu(*sm);
+            down = hidKeysDown();
             showMenu = true;
-        }
-        // Not right now
-        // else if (down & KEY_X)
-        // {
-        //     printf("Importing...\n");
-        //     importBoxes(true);
-        //     printf("Done!\n");
-        //     waitForInput();
-        //     showMenu = true;
-        // }
-        else if (down & KEY_L) {
-            printf("Running tests...\n");
+        } else if (down & KEY_Y) {
+            importMenu(*sm);
+            down = hidKeysDown();
+            showMenu = true;
+        } else if (down & KEY_L) {
+            openMenu(*sm);
+            down = hidKeysDown();
+            showMenu = true;
+        } else if (down & KEY_R) {
+            printf("Testing...\n");
             Tests::RunAllTests();
             printf("Done!\n");
             waitForInput();
             showMenu = true;
         }
     }
-    cecduExit();
+    shutdown();
     return 0;
 }

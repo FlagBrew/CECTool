@@ -1,181 +1,137 @@
 #include <3ds.h>
-#include <inttypes.h>
 #include <fstream>
 #include <sys/stat.h>
-#include "common/base64.hpp"
-#include "export.hpp"
-#include "streetpass/BoxInfo.hpp"
-#include "streetpass/Box.hpp"
-#include "streetpass/MBoxList.hpp"
 
-extern "C"
-{
+#include "common/base64.hpp"
+#include "common/util.hpp"
+#include "export.hpp"
+#include "streetpass/MBox.hpp"
+
+extern "C" {
 #include "3ds/services/cecdu.h"
 }
 
-using Streetpass::Box;
-using Streetpass::BoxInfo;
-using Streetpass::boxList;
-using Streetpass::Message;
+void displayExportMenu(Streetpass::StreetpassManager& sm) {
+    consoleClear();
+    printf("CECTool\n\n");
+    sm.ListBoxes();
+    printf("\n\nExport Menu\n\n");
+    printf("[A] Export a Box\n");
+    printf("[B] Export all boxes\n\n");
+    printf("Press START for Main Menu\n\n");
+}
 
-void dumpBoxes()
-{
-    Result res;
-    boxList list;
-    u32 boxListSize = sizeof(boxList);
-    CECDU_OpenAndRead(boxListSize, 0x0, CEC_PATH_MBOX_LIST, CEC_READ | CEC_CHECK, (u8*)&list, nullptr);
-    mkdir("/3ds/CECTool", 777);
-    mkdir("/3ds/CECTool/template", 777);
-    FILE* out;
-    for (u32 i = 0; i < list.numBoxes; i++)
-    {
-        const std::string boxId = list.boxId[i];
-        std::string path = "/3ds/CECTool/" + boxId;
-        std::string templatePath = "/3ds/CECTool/template/" + boxId;
-        mkdir(path.c_str(), 777);
-        mkdir(templatePath.c_str(), 777);
-        path += "/InBox___";
-        templatePath += "/InBox___";
-        std::string filePath;
-        mkdir(path.c_str(), 777);
-        mkdir(templatePath.c_str(), 777);
-        u32 id = strtoul(boxId.c_str(), nullptr, 16);
-        Box* box = new Box(id, false);
-        for (auto message : box->getMessages())
-        {
-            u32 messageSize = message.messageSize();
-            cecMessageId messageId = message.messageID();
-            u8* messageData = new u8[messageSize];
-            std::string outPath = path + '/' + base64_encode((char*)&messageId, 8);
-            if (R_FAILED(res = CECDU_ReadMessage(id, false, 8, messageSize, messageId.data, messageData, nullptr)))
-            {
-                delete[] messageData;
-                printf("Message Read: %s", outPath.c_str());
-                continue;
+void displayExportSlotSelection(Streetpass::StreetpassManager& sm, u8 slotNum) {
+    consoleClear();
+    printf("CECTool\n\n");
+    sm.ListBoxes();
+    printf("\n\nExport Menu\n\n");
+    printf("[A] Select a Box to Export\n\n");
+    printf("Press START for Main Menu\n\n");
+    printf("Slot Number: [%x]\n\n", slotNum);
+}
+
+void exportMenu(Streetpass::StreetpassManager& sm) {
+    u8 slotNum = 0;
+    displayExportMenu(sm);
+    u32 down = hidKeysDown();
+    while (aptMainLoop() && !(down & KEY_START)) {
+        down = hidKeysDown();
+        hidScanInput();
+
+        if (down & KEY_A) {
+            displayExportSlotSelection(sm, slotNum);
+            while (aptMainLoop() && !(down & KEY_START)) {
+                down = hidKeysDown();
+                hidScanInput();
+                if (down & KEY_A) {
+                    exportBox(sm, slotNum);
+                    waitForInput();
+                    break;
+                } else if (down & KEY_DOWN) {
+                    if (slotNum > 0) {
+                        slotNum--;
+                        displayExportSlotSelection(sm, slotNum);
+                    }
+                } else if (down & KEY_UP) {
+                    if (slotNum < sm.BoxList().MaxNumberOfSlots() - 1) {
+                        slotNum++;
+                        displayExportSlotSelection(sm, slotNum);
+                    }
+                }
             }
-            out = fopen(outPath.c_str(), "w");
-            fwrite(messageData, 1, messageSize, out);
-            fclose(out);
-            delete[] messageData;
-        }
-        BoxInfo copy = box->getInfo();
-        copy.clearMessages();
-        filePath = templatePath + "/BoxInfo_____";
-        out = fopen(filePath.c_str(), "w");
-        fwrite(copy.data().data(), 1, copy.data().size(), out);
-        fclose(out);
-
-        path = "/3ds/CECTool/" + boxId + "/OutBox__";
-        templatePath = "/3ds/CECTool/template/" + boxId + "/OutBox__";
-        mkdir(path.c_str(), 777);
-        mkdir(templatePath.c_str(), 777);
-        delete box;
-        box = new Box(id, true);
-        for (auto message : box->getMessages())
-        {
-            u32 messageSize = message.messageSize();
-            cecMessageId messageId = message.messageID();
-            u8* messageData = new u8[messageSize];
-            std::string outPath = path + '/' + base64_encode((char*)&messageId, 8);
-            if (R_FAILED(res = CECDU_ReadMessage(id, true, 8, messageSize, messageId.data, messageData, nullptr)))
-            {
-                delete[] messageData;
-                printf("Message Read: %s", outPath.c_str());
-                continue;
-            }
-            out = fopen(outPath.c_str(), "w");
-            fwrite(messageData, 1, messageSize, out);
-            fclose(out);
-            delete[] messageData;
-        }
-        copy = box->getInfo();
-        copy.clearMessages();
-        filePath = templatePath + "/BoxInfo_____";
-        out = fopen(filePath.c_str(), "w");
-        fwrite(copy.data().data(), 1, copy.data().size(), out);
-        fclose(out);
-        if (R_FAILED(res = CECDU_Open(id, CEC_PATH_OUTBOX_INDEX, CEC_READ | CEC_CHECK, nullptr)))
-        {
-            printf("OBIndex Read: %" PRIX32 "\n", res);
-        }
-        else
-        {
-            u32 bufferSize = 8;
-            u8 data[bufferSize] = {0};
-            CECDU_Read(bufferSize, &data, nullptr);
-            *(u32*)(data + 4) = 0;
-            filePath = templatePath + "/OBIndex_____";
-            out = fopen(filePath.c_str(), "w");
-            fwrite(data, 1, 8, out);
-            fclose(out);
-        }
-        
-        templatePath = "/3ds/CECTool/template/" + boxId;
-        u32 bufferSize = 96;
-        u8* read = new u8[bufferSize];
-        if (R_SUCCEEDED(res = CECDU_OpenAndRead(bufferSize, id, CEC_PATH_MBOX_INFO, CEC_READ | CEC_CHECK, read, nullptr)))
-        {
-            filePath = templatePath + "/MBoxInfo____";
-            out = fopen(filePath.c_str(), "w");
-            fwrite(read, 1, bufferSize, out);
-            fclose(out);
-            delete[] read;
-        }
-        else
-        {
-            delete[] read;
-            printf("MBoxInfo Read: %" PRIX32 "\n", id);
-            continue;
-        }
-        bufferSize = 4608;
-        read = new u8[bufferSize];
-        if (R_SUCCEEDED(res = CECDU_OpenAndRead(bufferSize, id, CECMESSAGE_BOX_ICON, CEC_READ | CEC_CHECK, read, nullptr)))
-        {
-            filePath = templatePath + "/MBoxData.001";
-            out = fopen(filePath.c_str(), "w");
-            fwrite(read, 1, bufferSize, out);
-            fclose(out);
-            delete[] read;
-        }
-        else
-        {
-            delete[] read;
-            printf("MBoxData.001 Read: %" PRIX32 "\n", id);
-            continue;
-        }
-
-        u32 filesize = 0;
-        if (R_SUCCEEDED(res = CECDU_Open(id, CECMESSAGE_BOX_TITLE, CEC_READ, &filesize)))
-        {
-            filePath = templatePath + "/MBoxData.010";
-            read = new u8[filesize];
-
-            CECDU_Read(filesize, read, &filesize);
-            out = fopen(filePath.c_str(), "w");
-            fwrite(read, 1, filesize, out);
-            fclose(out);
-            delete[] read;
-        }
-        else
-        {
-            printf("MBoxData.010 Read: %" PRIX32 "\n", id);
-            continue;
-        }
-        bufferSize = 8;
-        read = new u8[bufferSize];
-        if (R_SUCCEEDED(res = CECDU_OpenAndRead(bufferSize, id, CecDataPathType(100 + 50), CEC_READ | CEC_CHECK, read, nullptr)))
-        {
-            filePath = templatePath + "/MBoxData.050";
-            out = fopen(filePath.c_str(), "w");
-            fwrite(read, 1, bufferSize, out);
-            fclose(out);
-            delete[] read;
-        }
-        else
-        {
-            delete[] read;
-            printf("MBoxData.050 Read: %" PRIX32 "\n", id);
-            continue;
+            break;
+        } else if (down & KEY_B) {
+            exportAllBoxes(sm);
+            waitForInput();
+            break;
         }
     }
 }
+
+void exportAllBoxes(Streetpass::StreetpassManager& sm) {
+    for (u8 slotNum = 0; slotNum < sm.BoxList().MaxNumberOfSlots(); slotNum++) {
+        exportBox(sm, slotNum);
+    }
+    printf("All boxes exported.\n");
+}
+
+void exportBox(Streetpass::StreetpassManager& sm, u8 slotNum) {
+    const std::string boxName = sm.BoxList().BoxNames()[slotNum];
+    std::unique_ptr<Streetpass::MBox> mbox = sm.OpenBox(slotNum);
+    if (mbox) {
+        //printf("%lx : %lx\n", mbox->ProgramId(), mbox->PrivateId());
+
+        const std::string mboxExportPath = "/3ds/CECTool/export/" + boxName + "/";
+        const std::string mboxExportInboxPath = mboxExportPath + "InBox___/";
+        const std::string mboxExportOutboxPath = mboxExportPath + "OutBox__/";
+        mkdir(mboxExportPath.c_str(), 777);
+        mkdir(mboxExportInboxPath.c_str(), 777);
+        mkdir(mboxExportOutboxPath.c_str(), 777);
+
+        std::ofstream mboxInfo(mboxExportPath + "MBoxInfo____", std::ios::out | std::ios::binary | std::ios::trunc);
+        mboxInfo.write(reinterpret_cast<const char*>(mbox->data().data()), sizeof(Streetpass::CecMBoxInfoHeader));
+        mboxInfo.close();
+
+        std::ofstream mboxIcon(mboxExportPath + "MBoxData.001", std::ios::out | std::ios::binary | std::ios::trunc);
+        mboxIcon.write(reinterpret_cast<const char*>(mbox->BoxIcon().data().data()), mbox->BoxIcon().size());
+        mboxIcon.close();
+
+        std::ofstream mboxTitle(mboxExportPath + "MBoxData.010", std::ios::out | std::ios::binary | std::ios::trunc);
+        mboxTitle.write(reinterpret_cast<const char*>(mbox->BoxTitle().data().data()), mbox->BoxTitle().size());
+        mboxTitle.close();
+
+        std::ofstream mboxProgramId(mboxExportPath + "MBoxData.050", std::ios::out | std::ios::binary | std::ios::trunc);
+        mboxProgramId.write(reinterpret_cast<const char*>(mbox->BoxProgramId().data().data()), mbox->BoxProgramId().size());
+        mboxProgramId.close();
+
+        std::ofstream inboxInfo(mboxExportInboxPath + "BoxInfo_____", std::ios::out | std::ios::binary | std::ios::trunc);
+        inboxInfo.write(reinterpret_cast<const char*>(mbox->Inbox().Info().data().data()), mbox->Inbox().Info().FileSize());
+        inboxInfo.close();
+
+        for (auto message : mbox->Inbox().Messages()) {
+            std::string fileName = base64_encode(reinterpret_cast<const char*>(message.MessageId().data), sizeof(CecMessageId));
+            std::ofstream file(mboxExportInboxPath + fileName, std::ios::out | std::ios::binary | std::ios::trunc);
+            file.write(reinterpret_cast<const char*>(message.data().data()), message.MessageSize());
+            file.close();
+        }
+
+        std::ofstream outboxInfo(mboxExportOutboxPath + "BoxInfo_____", std::ios::out | std::ios::binary | std::ios::trunc);
+        outboxInfo.write(reinterpret_cast<const char*>(mbox->Outbox().Info().data().data()), mbox->Outbox().Info().FileSize());
+        outboxInfo.close();
+
+        std::ofstream obIndex(mboxExportOutboxPath + "OBIndex_____", std::ios::out | std::ios::binary | std::ios::trunc);
+        obIndex.write(reinterpret_cast<const char*>(mbox->Outbox().Index().data().data()), mbox->Outbox().Index().FileSize());
+        obIndex.close();
+
+        for (auto message : mbox->Outbox().Messages()) {
+            std::string fileName = base64_encode(reinterpret_cast<const char*>(message.MessageId().data), sizeof(CecMessageId));
+            std::ofstream file(mboxExportOutboxPath + fileName, std::ios::out | std::ios::binary | std::ios::trunc);
+            file.write(reinterpret_cast<const char*>(message.data().data()), message.MessageSize());
+            file.close();
+        }
+
+        printf("Box in slot [%x] exported.\n", slotNum);
+    }
+}
+

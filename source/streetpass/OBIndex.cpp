@@ -1,53 +1,69 @@
 #include "streetpass/OBIndex.hpp"
+#include <cstring>
 
 namespace Streetpass {
 
-OBIndex::OBIndex(u8* data, bool cont) {
-    std::copy(data, data + 8, (u8*)&obIndex);
-        if (cont)
-        {
-            for (size_t i = 0; i < obIndex.messages; i++)
-            {
-                cecMessageId id;
-                std::copy(data + 8 + i * 8, data + 8 + i * 8 + 8, id.data);
-                messages.push_back(id);
-            }
-        }
+OBIndex::OBIndex() : obIndexHeader(), messageIds() {
+    obIndexHeader.magic = 0x6767;
 }
 
-void OBIndex::addMessage(const Message& message) {
-    addMessage(message.getInfo());
-}
-
-void OBIndex::addMessage(const MessageInfo& message) {
-    cecMessageId id = message.messageID();
-
-    if (std::find(messages.cbegin(), messages.cend(), id) == messages.cend())
-    {
-        messages.push_back(id);
-        obIndex.messages++;
+OBIndex::OBIndex(const std::vector<u8>& buffer) : obIndexHeader(), messageIds() {
+    std::memcpy(&obIndexHeader, buffer.data(), sizeof(CecOBIndexHeader));
+    const u32 numMessages = obIndexHeader.numMessages;
+    if (numMessages > 0) {
+        messageIds.resize(numMessages);
+        std::memcpy(messageIds.data(), buffer.data() + sizeof(CecOBIndexHeader), numMessages * sizeof(CecMessageId));
     }
+}
+
+OBIndex::~OBIndex() {}
+
+bool OBIndex::AddMessageId(const CecMessageId& messageId) {
+    for (auto it = messageIds.cbegin(); it != messageIds.cend(); ++it) {
+        if (memcmp(it->data, messageId.data, 8) == 0) {
+            return false; // Message id found; Adding failed.
+        }
+    }
+    // Message id not found; Add it to the list
+    messageIds.emplace_back(messageId);
+    obIndexHeader.numMessages++;
+    return true; // Message id added
+}
+
+bool OBIndex::DeleteMessageId(const CecMessageId& messageId) {
+    for (auto it = messageIds.cbegin(); it != messageIds.cend(); it++) {
+        if (memcmp(it->data, messageId.data, 8) == 0) {
+            messageIds.erase(it);
+            obIndexHeader.numMessages--;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool OBIndex::DeleteAllMessageIds() {
+    obIndexHeader.numMessages = 0;
+    messageIds.clear();
+    return true;
 }
 
 std::vector<u8> OBIndex::data() const {
-    std::vector<u8> ret;
-    u8* info = (u8*)&obIndex;
-    for (size_t i = 0; i < sizeof(obIndex); i++)
-    {
-        ret.push_back(info[i]);
-    }
-    for (auto id : messages)
-    {
-        for (size_t i = 0; i < 8; i++)
-        {
-            ret.push_back(id.data[i]);
-        }
-    }
+    std::vector<u8> ret(FileSize());
+    std::memcpy(ret.data(), &obIndexHeader, sizeof(CecOBIndexHeader));
+    std::memcpy(ret.data() + sizeof(CecOBIndexHeader), messageIds.data(), messageIds.size() * sizeof(CecMessageId));
     return ret;
 }
 
-u32 OBIndex::size() const {
-    return obIndex.messages;
+std::vector<CecMessageId> OBIndex::MessageIds() const {
+    return messageIds;
+}
+
+u32 OBIndex::FileSize() const {
+    return sizeof(CecOBIndexHeader) + sizeof(CecMessageId) * obIndexHeader.numMessages;
+}
+
+u32 OBIndex::NumberOfMessages() const {
+    return obIndexHeader.numMessages;
 }
 
 } // namespace Streetpass
