@@ -201,6 +201,11 @@ Result StreetpassManager::DeleteAllBoxes() {
 
     mboxList->DeleteAllBoxes();
 
+    for (auto& box : boxes)
+    {
+        box = nullptr;
+    }
+
     Result res = CECDU_OpenAndWrite(sizeof(CecMBoxListHeader), 0x0, CEC_PATH_MBOX_LIST, CEC_WRITE,
                              mboxList->data().data());
     if (R_FAILED(res)) {
