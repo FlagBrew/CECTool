@@ -211,10 +211,14 @@ Result StreetpassManager::DeleteAllBoxes() {
     return 0;
 }
 
-std::unique_ptr<MBox> StreetpassManager::OpenBox(u8 slotNum) const {
+std::shared_ptr<MBox> StreetpassManager::OpenBox(u8 slotNum) const {
     if (slotNum < 0 || slotNum > 11) {
         printf("OpenBox: Slot Number out of range\n");
         return nullptr;
+    }
+    if (boxes[slotNum])
+    {
+        return boxes[slotNum];
     }
     std::vector<u32> boxIds = mboxList->BoxIds();
     u32 id = boxIds[slotNum];
@@ -326,7 +330,7 @@ std::unique_ptr<MBox> StreetpassManager::OpenBox(u8 slotNum) const {
     std::unique_ptr<MBoxProgramId> programId = std::make_unique<MBoxProgramId>(mboxProgramIdBuffer);
     std::unique_ptr<MBoxTitle> title = std::make_unique<MBoxTitle>(mboxTitleBuffer);
 
-    return std::make_unique<MBox>(std::move(inbox), std::move(outbox), std::move(icon),
+    return boxes[slotNum] = std::make_shared<MBox>(std::move(inbox), std::move(outbox), std::move(icon),
         std::move(programId), std::move(title), mboxInfoHeaderBuffer);
 }
 
@@ -354,7 +358,7 @@ Result StreetpassManager::ReloadBoxList() {
 void StreetpassManager::BackupBox(u8 slotNum)
 {
     const std::string boxName = BoxList().BoxNames()[slotNum];
-    std::unique_ptr<Streetpass::MBox> mbox = OpenBox(slotNum);
+    std::shared_ptr<Streetpass::MBox> mbox = OpenBox(slotNum);
     if (mbox) {
         const std::string mboxExportPath = "/3ds/CECTool/export/" + boxName + "/";
         const std::string mboxExportInboxPath = mboxExportPath + "InBox___/";
