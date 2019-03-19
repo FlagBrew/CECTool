@@ -1,4 +1,9 @@
 #include "streetpass/StreetpassManager.hpp"
+#include <fstream>
+#include <sys/stat.h>
+#include "base64.hpp"
+#include <algorithm>
+#include "STDirectory.hpp"
 
 extern "C" {
 #include "3ds/services/cecdu.h"
@@ -344,6 +349,199 @@ Result StreetpassManager::ReloadBoxList() {
         mboxList = std::make_unique<MBoxList>(mboxListBuffer);
     }
     return 0;
+}
+
+void StreetpassManager::BackupBox(u8 slotNum)
+{
+    const std::string boxName = BoxList().BoxNames()[slotNum];
+    std::unique_ptr<Streetpass::MBox> mbox = OpenBox(slotNum);
+    if (mbox) {
+        const std::string mboxExportPath = "/3ds/CECTool/export/" + boxName + "/";
+        const std::string mboxExportInboxPath = mboxExportPath + "InBox___/";
+        const std::string mboxExportOutboxPath = mboxExportPath + "OutBox__/";
+        mkdir(mboxExportPath.c_str(), 777);
+        mkdir(mboxExportInboxPath.c_str(), 777);
+        mkdir(mboxExportOutboxPath.c_str(), 777);
+
+        std::ofstream out(mboxExportPath + "MBoxInfo____", std::ios::out | std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(mbox->data().data()), sizeof(Streetpass::CecMBoxInfoHeader));
+        out.close();
+
+        out.open(mboxExportPath + "MBoxData.001", std::ios::out | std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(mbox->BoxIcon().data().data()), mbox->BoxIcon().size());
+        out.close();
+
+        out.open(mboxExportPath + "MBoxData.010", std::ios::out | std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(mbox->BoxTitle().data().data()), mbox->BoxTitle().size());
+        out.close();
+
+        out.open(mboxExportPath + "MBoxData.050", std::ios::out | std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(mbox->BoxProgramId().data().data()), mbox->BoxProgramId().size());
+        out.close();
+
+        out.open(mboxExportInboxPath + "BoxInfo_____", std::ios::out | std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(mbox->Inbox().Info().data().data()), mbox->Inbox().Info().FileSize());
+        out.close();
+
+        for (auto message : mbox->Inbox().Messages()) {
+            std::string fileName = base64_encode(reinterpret_cast<const char*>(message.MessageId().data), sizeof(CecMessageId));
+            out.open(mboxExportInboxPath + fileName, std::ios::out | std::ios::binary | std::ios::trunc);
+            out.write(reinterpret_cast<const char*>(message.data().data()), message.MessageSize());
+            out.close();
+        }
+
+        out.open(mboxExportOutboxPath + "BoxInfo_____", std::ios::out | std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(mbox->Outbox().Info().data().data()), mbox->Outbox().Info().FileSize());
+        out.close();
+
+        out.open(mboxExportOutboxPath + "OBIndex_____", std::ios::out | std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(mbox->Outbox().Index().data().data()), mbox->Outbox().Index().FileSize());
+        out.close();
+
+        for (auto message : mbox->Outbox().Messages()) {
+            std::string fileName = base64_encode(reinterpret_cast<const char*>(message.MessageId().data), sizeof(CecMessageId));
+            out.open(mboxExportOutboxPath + fileName, std::ios::out | std::ios::binary | std::ios::trunc);
+            out.write(reinterpret_cast<const char*>(message.data().data()), message.MessageSize());
+            out.close();
+        }
+    }
+}
+
+Result StreetpassManager::ImportBox(u32 boxId)
+{
+    // check if box already exists...
+    std::vector<u32> currentBoxIds = BoxList().BoxIds();
+
+    if(std::any_of(currentBoxIds.cbegin(), currentBoxIds.cend(), [&boxId](u32 id){ return id == boxId;})) {
+        printf("Box already exists.\n");
+        return 0;
+    }
+    char boxName[16];
+    sprintf(boxName, "%8lx", boxId);
+    const std::string mboxExportPath = "/3ds/CECTool/export/" + std::string(boxName) + "/";
+    const std::string mboxExportInboxPath = mboxExportPath + "InBox___/";
+    const std::string mboxExportOutboxPath = mboxExportPath + "OutBox__/";
+
+    std::ifstream in(mboxExportPath + "MBoxInfo____", std::ios::in | std::ios::binary);
+    in.seekg(0, in.end);
+    const u32 mboxInfoSize = in.tellg();
+    in.seekg(0, in.beg);
+    std::vector<u8> mboxInfoBuffer(mboxInfoSize);
+    in.read(reinterpret_cast<char*>(mboxInfoBuffer.data()), mboxInfoSize);
+    in.close();
+
+    in.open(mboxExportPath + "MBoxData.001", std::ios::in | std::ios::binary);
+    in.seekg(0, in.end);
+    const u32 mboxIconSize = in.tellg();
+    in.seekg(0, in.beg);
+    std::vector<u8> mboxIconBuffer(mboxIconSize);
+    in.read(reinterpret_cast<char*>(mboxIconBuffer.data()), mboxIconSize);
+    in.close();
+
+    in.open(mboxExportPath + "MBoxData.010", std::ios::in | std::ios::binary);
+    in.seekg(0, in.end);
+    const u32 mboxTitleSize = in.tellg();
+    in.seekg(0, in.beg);
+    std::vector<u8> mboxTitleBuffer(mboxTitleSize);
+    in.read(reinterpret_cast<char*>(mboxTitleBuffer.data()), mboxTitleSize);
+    in.close();
+
+    in.open(mboxExportPath + "MBoxData.050", std::ios::in | std::ios::binary);
+    in.seekg(0, in.end);
+    const u32 mboxProgramIdSize = in.tellg();
+    in.seekg(0, in.beg);
+    std::vector<u8> mboxProgramIdBuffer(mboxProgramIdSize);
+    in.read(reinterpret_cast<char*>(mboxProgramIdBuffer.data()), mboxProgramIdSize);
+    in.close();
+
+    in.open(mboxExportInboxPath + "BoxInfo_____", std::ios::in | std::ios::binary);
+    in.seekg(0, in.end);
+    const u32 inboxInfoSize = in.tellg();
+    in.seekg(0, in.beg);
+    std::vector<u8> inboxInfoBuffer(inboxInfoSize);
+    in.read(reinterpret_cast<char*>(inboxInfoBuffer.data()), inboxInfoSize);
+    in.close();
+
+    // inbox messages
+    std::unique_ptr<STDirectory> inboxDirectory = std::make_unique<STDirectory>(mboxExportInboxPath);
+    std::vector<Streetpass::Message> inboxMessages{};
+    const std::string boxInfoString = "BoxInfo_____";
+    for (u8 messageNum = 0; messageNum < inboxDirectory->count(); messageNum++) {
+        const std::string messageName = inboxDirectory->item(messageNum);
+        if (messageName != boxInfoString) {
+            in.open(mboxExportInboxPath + messageName, std::ios::in | std::ios::binary);
+            in.seekg(0, in.end);
+            const u32 messageSize = in.tellg();
+            in.seekg(0, in.beg);
+
+            std::vector<u8> messageBuffer(messageSize);
+            in.read(reinterpret_cast<char*>(messageBuffer.data()), messageSize);
+            in.close();
+
+            inboxMessages.emplace_back(messageBuffer);
+        }
+    }
+
+    in.open(mboxExportOutboxPath + "BoxInfo_____", std::ios::in | std::ios::binary);
+    in.seekg(0, in.end);
+    const u32 outboxInfoSize = in.tellg();
+    in.seekg(0, in.beg);
+    std::vector<u8> outboxInfoBuffer(outboxInfoSize);
+    in.read(reinterpret_cast<char*>(outboxInfoBuffer.data()), outboxInfoSize);
+    in.close();
+
+    in.open(mboxExportOutboxPath + "OBIndex_____", std::ios::in | std::ios::binary);
+    in.seekg(0, in.end);
+    const u32 obIndexSize = in.tellg();
+    in.seekg(0, in.beg);
+    std::vector<u8> obIndexBuffer(obIndexSize);
+    in.read(reinterpret_cast<char*>(obIndexBuffer.data()), obIndexSize);
+    in.close();
+
+    // outbox messages
+    std::unique_ptr<STDirectory> outboxDirectory = std::make_unique<STDirectory>(mboxExportOutboxPath);
+    std::vector<Streetpass::Message> outboxMessages{};
+    const std::string obIndexString = "OBIndex_____";
+    for (u8 messageNum = 0; messageNum < outboxDirectory->count(); messageNum++) {
+        const std::string messageName = outboxDirectory->item(messageNum);
+        if (messageName != boxInfoString && messageName.c_str() != obIndexString) {
+            in.open(mboxExportOutboxPath + messageName, std::ios::in | std::ios::binary);
+            in.seekg(0, in.end);
+            const u32 messageSize = in.tellg();
+            in.seekg(0, in.beg);
+            
+            std::vector<u8> messageBuffer(messageSize);
+            in.read(reinterpret_cast<char*>(messageBuffer.data()), messageSize);
+            in.close();
+
+            outboxMessages.emplace_back(messageBuffer);
+        }
+    }
+
+    std::unique_ptr<Streetpass::BoxInfo> inboxInfo =
+        std::make_unique<Streetpass::BoxInfo>(inboxInfoBuffer);
+    std::unique_ptr<Streetpass::BoxInfo> outboxInfo =
+        std::make_unique<Streetpass::BoxInfo>(outboxInfoBuffer);
+    std::unique_ptr<Streetpass::OBIndex> obIndex =
+        std::make_unique<Streetpass::OBIndex>(obIndexBuffer);
+
+    std::unique_ptr<Streetpass::CecInbox> inbox =
+        std::make_unique<Streetpass::CecInbox>(boxId, std::move(inboxInfo), inboxMessages);
+    std::unique_ptr<Streetpass::CecOutbox> outbox =
+        std::make_unique<Streetpass::CecOutbox>(boxId, std::move(outboxInfo), std::move(obIndex), outboxMessages);
+
+    std::unique_ptr<Streetpass::MBoxIcon> icon =
+        std::make_unique<Streetpass::MBoxIcon>(mboxIconBuffer);
+    std::unique_ptr<Streetpass::MBoxProgramId> programId =
+        std::make_unique<Streetpass::MBoxProgramId>(mboxProgramIdBuffer);
+    std::unique_ptr<Streetpass::MBoxTitle> title =
+        std::make_unique<Streetpass::MBoxTitle>(mboxTitleBuffer);
+
+    std::unique_ptr<Streetpass::MBox> mbox =
+        std::make_unique<Streetpass::MBox>(std::move(inbox), std::move(outbox), std::move(icon),
+        std::move(programId), std::move(title), mboxInfoBuffer);
+    
+    return CreateBox(boxId, boxName, std::move(mbox));
 }
 
 } // namespace Streetpass

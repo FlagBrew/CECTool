@@ -22,6 +22,8 @@ public:
     Result CreateBox(u32 boxId, const std::string& boxName, std::unique_ptr<MBox> mbox);
     Result DeleteBox(u8 slotNum);
     Result DeleteAllBoxes();
+    void BackupBox(u8 slotNum);
+    Result ImportBox(u32 boxId);
 
     MBoxList& BoxList();
     const MBoxList& BoxList() const;
