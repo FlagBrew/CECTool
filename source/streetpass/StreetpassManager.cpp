@@ -182,6 +182,8 @@ Result StreetpassManager::DeleteBox(u8 slotNum) {
         return 1;
     }
 
+    boxes[slotNum] = nullptr;
+
     ReloadBoxList();
 
     return 0;
