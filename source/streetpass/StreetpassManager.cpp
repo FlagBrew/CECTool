@@ -416,8 +416,8 @@ Result StreetpassManager::ImportBox(u32 boxId)
         printf("Box already exists.\n");
         return 0;
     }
-    char boxName[16];
-    sprintf(boxName, "%8lx", boxId);
+    char boxName[9] = {0};
+    sprintf(boxName, "%08lx", boxId);
     const std::string mboxExportPath = "/3ds/CECTool/export/" + std::string(boxName) + "/";
     const std::string mboxExportInboxPath = mboxExportPath + "InBox___/";
     const std::string mboxExportOutboxPath = mboxExportPath + "OutBox__/";
