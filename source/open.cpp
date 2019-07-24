@@ -44,7 +44,7 @@ void openMenu(Streetpass::StreetpassManager& sm) {
 
 void openBox(Streetpass::StreetpassManager& sm, u8 slotNum) {
     const std::string boxName = sm.BoxList().BoxNames()[slotNum];
-    std::unique_ptr<Streetpass::MBox> mbox = sm.OpenBox(slotNum);
+    std::shared_ptr<Streetpass::MBox> mbox = sm.OpenBox(slotNum);
 
     const std::string rootCecPath = "/CEC/";
     const std::string mboxPath = rootCecPath + boxName + "/";
