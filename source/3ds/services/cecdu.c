@@ -30,7 +30,7 @@ Result CECDU_Open(u32 programID, CecDataPathType path, u32 flag, u32* size)
     cmdbuf[1] = programID;
     cmdbuf[2] = path;
     cmdbuf[3] = flag;
-    cmdbuf[4] = IPC_Desc_CurProcessHandle(); // do placeholder
+    cmdbuf[4] = IPC_Desc_CurProcessId(); // do placeholder
     cmdbuf[5] = 0; // placeholder
 
     if (R_FAILED(res = svcSendSyncRequest(cecduHandle))) return res;
@@ -313,7 +313,7 @@ Result CECDU_OpenAndWrite(u32 bufferSize, u32 programID, CecDataPathType path, u
     cmdbuf[2] = programID;
     cmdbuf[3] = path;
     cmdbuf[4] = flag;
-    cmdbuf[5] = IPC_Desc_CurProcessHandle(); // do placeholder
+    cmdbuf[5] = IPC_Desc_CurProcessId(); // do placeholder
     cmdbuf[6] = 0; // placeholder
     cmdbuf[7] = IPC_Desc_Buffer(bufferSize, IPC_BUFFER_R);
     cmdbuf[8] = (u32)buffer;
@@ -332,7 +332,7 @@ Result CECDU_OpenAndRead(u32 bufferSize, u32 programID, CecDataPathType path, u3
     cmdbuf[2] = programID;
     cmdbuf[3] = path;
     cmdbuf[4] = flag;
-    cmdbuf[5] = IPC_Desc_CurProcessHandle();
+    cmdbuf[5] = IPC_Desc_CurProcessId();
     cmdbuf[6] = 0;
     cmdbuf[7] = IPC_Desc_Buffer(bufferSize, IPC_BUFFER_W);
     cmdbuf[8] = (u32)buffer;

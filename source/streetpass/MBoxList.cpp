@@ -114,7 +114,7 @@ Result MBoxList::DeleteAllBoxes() {
 
 std::vector<u32> MBoxList::BoxIds() const {
     std::vector<u32> ret{};
-    std::vector<char> boxId(8);
+    std::vector<char> boxId(16);
     for (u32 slotNum = 0; slotNum < MaxSlots; slotNum++) {
         std::memcpy(boxId.data(), mboxListHeader.boxNames[slotNum], boxId.size());
         std::string boxName(boxId.data());
